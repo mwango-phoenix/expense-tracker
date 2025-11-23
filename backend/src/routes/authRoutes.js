@@ -1,5 +1,5 @@
 import express from "express";
-import User from "../models/User";
+import User from "../models/User.js";
 import jwt from "jsonwebtoken";
 
 const router = express.Router();
@@ -85,10 +85,10 @@ router.post("/login", async (req, res) => {
       .json({
         token,
         user: {
-          _id: newUser._id,
-          username: newUser.username,
-          email: newUser.email,
-          profileImage: newUser.profileImage,
+          _id: user._id,
+          username: user.username,
+          email: user.email,
+          profileImage: user.profileImage,
         },
       });
   } catch (error) {
