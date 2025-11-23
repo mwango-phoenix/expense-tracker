@@ -1,0 +1,28 @@
+import express from 'express';
+import mongoose from 'mongoose';
+import cors from 'cors';
+import 'dotenv/config';
+import authRoutes from './routes/authRoutes.js';
+import { connectDB } from './lib/db.js';
+
+const app = express();
+
+app.use("/api/auth", authRoutes)
+// Middleware
+// app.use(cors());
+app.use(express.json());
+// app.use(express.urlencoded({ extended: true }));
+
+
+// // Error handling middleware
+// app.use((err, req, res, next) => {
+//   console.error(err.stack);
+//   res.status(500).json({ error: 'Something went wrong!' });
+// });
+
+const PORT = process.env.PORT;
+
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+  connectDB();
+});
