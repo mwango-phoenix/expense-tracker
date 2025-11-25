@@ -34,7 +34,7 @@ router.post("/", authMiddleware, async (req, res) => {
       category,
       description,
       icon,
-      date: date ? new Date(date) : undefined, // Use date if provided, otherwise default to Date.now
+      date: date ? new Date(date) : undefined,
     });
 
     await newIncome.save();
