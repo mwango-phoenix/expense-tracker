@@ -3,13 +3,14 @@ import mongoose from 'mongoose';
 import cors from 'cors';
 import 'dotenv/config';
 import authRoutes from './routes/authRoutes.js';
+import incomeRoutes from './routes/incomeRoutes.js';
 import { connectDB } from './lib/db.js';
 
 const app = express();
 
 app.use(express.json());
 app.use("/api/auth", authRoutes)
-app.use("/api/users", authRoutes);
+app.use("/api/income", incomeRoutes)
 
 
 
