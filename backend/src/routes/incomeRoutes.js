@@ -1,7 +1,7 @@
 import Income from "../models/Income.js";
 import authMiddleware from "../middleware/auth.middleware.js";
+import express from "express";
 
-const express = require("express");
 const router = express.Router();
 
 // A simple icon map
@@ -143,4 +143,4 @@ router.delete("/:id", authMiddleware, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

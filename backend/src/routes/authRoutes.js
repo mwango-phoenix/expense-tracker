@@ -3,8 +3,8 @@ import User from "../models/User.js";
 import jwt from "jsonwebtoken";
 
 const router = express.Router();
-const generateToken = (user) => {
-  return jwt.sign({ id: user._id, email: user.email }, process.env.JWT_SECRET, {
+const generateToken = (userId) => {
+  return jwt.sign({ userId }, process.env.JWT_SECRET, {
     expiresIn: "10d",
   });
 };
