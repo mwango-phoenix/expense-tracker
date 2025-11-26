@@ -1,6 +1,8 @@
 import Income from "../models/Income.js";
 import authMiddleware from "../middleware/auth.middleware.js";
 import express from "express";
+import mongoose from 'mongoose';
+
 
 const router = express.Router();
 
