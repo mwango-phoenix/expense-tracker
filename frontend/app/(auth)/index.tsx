@@ -5,43 +5,24 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   KeyboardAvoidingView,
+  Alert,
 } from "react-native";
 import { useState } from "react";
 import styles from "../../styles/auth.styles";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import COLOURS from "../../constants/colours";
 import { Link } from "expo-router";
+import { useAuthStore } from "@/store/authStore";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState("");
+  const { isLoading, login } = useAuthStore() as { isLoading: boolean, login: (email: string, password: string) => Promise<any> }
 
   const handleLogin = async () => {
-    setLoading(true);
-    setError("");
-    try {
-      const response = await fetch("http://localhost:5000/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-      const data = await response.json();
-      setLoading(false);
-      if (!response.ok) {
-        console.log("Login error:", data.message || "Login failed");
-        setError(data.message || "Login failed");
-      } else {
-        setError("");
-        // Handle successful login (e.g., save token, navigate)
-      }
-    } catch (err) {
-      setLoading(false);
-      console.log("Network error:", err);
-      setError("Network error. Please try again.");
-    }
+    const result = await login(email, password);
+    if (!result.success) Alert.alert("Error", result.error)
   };
 
   return (
@@ -86,14 +67,12 @@ export default function Login() {
           </TouchableOpacity>
         </View>
 
-        {error ? <Text style={styles.errorText}>{error}</Text> : null}
-
         <TouchableOpacity
           style={styles.button}
           onPress={handleLogin}
-          disabled={loading}
+          disabled={isLoading}
         >
-          {loading ? (
+          {isLoading ? (
             <ActivityIndicator color={styles.buttonText?.color || "#181A20"} />
           ) : (
             <Text style={styles.buttonText}>Login</Text>
