@@ -35,7 +35,11 @@ const CATEGORIES = [
 ];
 
 export default function Income() {
-  const { token } = useAuthStore() as { token: string | null };
+  const { token, isCheckingAuth, triggerDashboardRefresh } = useAuthStore() as { 
+    token: string | null; 
+    isCheckingAuth: boolean;
+    triggerDashboardRefresh: () => void;
+  };
   const insets = useSafeAreaInsets();
   const [incomes, setIncomes] = useState<Income[]>([]);
   const [loading, setLoading] = useState(true);
@@ -69,8 +73,12 @@ export default function Income() {
   };
 
   useEffect(() => {
-    fetchIncomes();
-  }, []);
+    if (!isCheckingAuth && token) {
+      fetchIncomes();
+    } else if (!isCheckingAuth && !token) {
+      setLoading(false);
+    }
+  }, [isCheckingAuth, token]);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -127,10 +135,13 @@ export default function Income() {
         body: JSON.stringify(incomeData),
       });
 
+      console.log(token)
+
       if (response.ok) {
         setModalVisible(false);
         resetForm();
         fetchIncomes();
+        triggerDashboardRefresh();
         Alert.alert("Success", editingIncome ? "Income updated!" : "Income added!");
       } else {
         const error = await response.json();
@@ -157,6 +168,7 @@ export default function Income() {
 
             if (response.ok) {
               fetchIncomes();
+              triggerDashboardRefresh();
               Alert.alert("Success", "Income deleted");
             }
           } catch (error) {

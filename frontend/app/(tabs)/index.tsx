@@ -34,7 +34,11 @@ interface DashboardSummary {
 }
 
 export default function Index() {
-  const { token } = useAuthStore() as { token: string | null };
+  const { token, isCheckingAuth, refreshDashboard } = useAuthStore() as { 
+    token: string | null; 
+    isCheckingAuth: boolean;
+    refreshDashboard: number;
+  };
   const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -48,7 +52,8 @@ export default function Index() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [hasMore, setHasMore] = useState(true);
 
-  const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://localhost:3001";
+  const API_URL = process.env.API_URL || "http://10.0.2.2:3001";
+  console.log("API_URL:", API_URL);
 
   const fetchDashboardSummary = async () => {
     try {
@@ -125,8 +130,18 @@ export default function Index() {
   };
 
   useEffect(() => {
-    loadData();
-  }, []);
+    if (!isCheckingAuth && token) {
+      loadData();
+    } else if (!isCheckingAuth && !token) {
+      setLoading(false);
+    }
+  }, [isCheckingAuth, token]);
+
+  useEffect(() => {
+    if (!isCheckingAuth && token && refreshDashboard > 0) {
+      loadData(true);
+    }
+  }, [refreshDashboard]);
 
   const onRefresh = useCallback(() => {
     loadData(true);
