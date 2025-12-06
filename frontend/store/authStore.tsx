@@ -10,6 +10,7 @@ export const useAuthStore = create((set) => ({
   token: null,
   isLoading: false,
   isCheckingAuth: true,
+  refreshDashboard: 0, // Counter to trigger dashboard refresh
 
   register: async (username: string, email: string, password: string) => {
     set({ isLoading: true });
@@ -72,14 +73,30 @@ export const useAuthStore = create((set) => ({
   },
   
   checkAuth: async () => {
+    set({ isCheckingAuth: true });
     try {
       const token = await AsyncStorage.getItem("token");
       const userJson = await AsyncStorage.getItem("user");
       const user = userJson ? JSON.parse(userJson) : null;
 
-      set({ token, user });
+      set({ token, user, isCheckingAuth: false });
     } catch (error) {
       console.log("Auth check failed:", error);
+      set({ isCheckingAuth: false });
     }
+  },
+
+  logout: async () => {
+    try {
+      await AsyncStorage.removeItem("token");
+      await AsyncStorage.removeItem("user");
+      set({ token: null, user: null });
+    } catch (error) {
+      console.log("Logout failed:", error);
+    }
+  },
+
+  triggerDashboardRefresh: () => {
+    set((state: any) => ({ refreshDashboard: state.refreshDashboard + 1 }));
   },
 }));

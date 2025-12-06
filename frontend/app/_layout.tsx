@@ -8,28 +8,36 @@ export default function RootLayout() {
   const router = useRouter();
   const segments = useSegments();
 
-  const { checkAuth, user, token } = useAuthStore() as {
+  const { checkAuth, user, token, isCheckingAuth } = useAuthStore() as {
     checkAuth: () => void;
-    user: string | null;
+    user: any;
     token: string | null;
+    isCheckingAuth: boolean;
   };
 
   useEffect(() => {
     checkAuth();
   }, []);
 
-  const isSignedIn = true;
+  const isSignedIn = !!(user && token);
 
-  // useEffect(() => {
-  //   const authScreen = segments[0] === "(auth)";
-  //   isSignedIn = user && token;
-  // }, [user, token, segments]);
+  useEffect(() => {
+    if (isCheckingAuth) return;
+
+    const inAuthGroup = segments[0] === "(auth)";
+
+    if (!isSignedIn && !inAuthGroup) {
+      router.replace("/(auth)");
+    } else if (isSignedIn && inAuthGroup) {
+      router.replace("/(tabs)");
+    }
+  }, [isSignedIn, segments, isCheckingAuth]);
 
   return (
     <SafeAreaProvider>
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Protected guard={isSignedIn}>
-          <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="(tabs)" />
         </Stack.Protected>
 
         <Stack.Protected guard={!isSignedIn}>
