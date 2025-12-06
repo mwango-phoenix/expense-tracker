@@ -114,6 +114,6 @@ const getSummary = async (req, res) => {
     }
 };
 
-module.exports = { getMonthlyIncomeSummary, /* ...other exports */ };
+router.get('/summary', authMiddleware, getSummary);
 
-export default mongoose.model("Dashboard", DashboardSchema);
+export default router;
