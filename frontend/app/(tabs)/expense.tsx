@@ -6,7 +6,6 @@ import {
   TextInput,
   Modal,
   RefreshControl,
-  ActivityIndicator,
   Alert,
 } from "react-native";
 import React, { useState, useEffect, useCallback } from "react";
@@ -38,7 +37,11 @@ const CATEGORIES = [
 ];
 
 export default function Expense() {
-  const { token } = useAuthStore() as { token: string | null };
+  const { token, isCheckingAuth, triggerDashboardRefresh } = useAuthStore() as { 
+    token: string | null; 
+    isCheckingAuth: boolean;
+    triggerDashboardRefresh: () => void;
+  };
   const insets = useSafeAreaInsets();
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
@@ -72,8 +75,12 @@ export default function Expense() {
   };
 
   useEffect(() => {
-    fetchExpenses();
-  }, []);
+    if (!isCheckingAuth && token) {
+      fetchExpenses();
+    } else if (!isCheckingAuth && !token) {
+      setLoading(false);
+    }
+  }, [isCheckingAuth, token]);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -134,6 +141,7 @@ export default function Expense() {
         setModalVisible(false);
         resetForm();
         fetchExpenses();
+        triggerDashboardRefresh();
         Alert.alert("Success", editingExpense ? "Expense updated!" : "Expense added!");
       } else {
         const error = await response.json();
@@ -160,6 +168,7 @@ export default function Expense() {
 
             if (response.ok) {
               fetchExpenses();
+              triggerDashboardRefresh();
               Alert.alert("Success", "Expense deleted");
             }
           } catch (error) {
