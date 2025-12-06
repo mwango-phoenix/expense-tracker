@@ -15,26 +15,7 @@ import styles from "@/styles/create.styles";
 import colours from "@/constants/colours";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { SkeletonCard } from "@/components/Skeleton";
-
-interface Expense {
-  _id: string;
-  amount: number;
-  category: string;
-  description?: string;
-  icon: string;
-  date: string;
-}
-
-const CATEGORIES = [
-  { name: "Food", icon: "utensils" },
-  { name: "Transport", icon: "car" },
-  { name: "Shopping", icon: "shopping-bag" },
-  { name: "Entertainment", icon: "film" },
-  { name: "Bills", icon: "file-invoice-dollar" },
-  { name: "Health", icon: "heartbeat" },
-  { name: "Education", icon: "graduation-cap" },
-  { name: "Other", icon: "wallet" },
-];
+import { Expense, EXPENSE_CATEGORIES } from "@/types";
 
 export default function Expense() {
   const { token, isCheckingAuth, triggerDashboardRefresh } = useAuthStore() as { 
@@ -179,7 +160,7 @@ export default function Expense() {
     ]);
   };
 
-  const selectCategory = (cat: typeof CATEGORIES[0]) => {
+  const selectCategory = (cat: typeof EXPENSE_CATEGORIES[0]) => {
     setCategory(cat.name);
     setSelectedIcon(cat.icon);
   };
@@ -278,7 +259,7 @@ export default function Expense() {
             <ScrollView>
               <Text style={[styles.textSecondary, { marginBottom: 8 }]}>Category</Text>
               <View style={{ flexDirection: "row", flexWrap: "wrap", marginBottom: 16 }}>
-                {CATEGORIES.map((cat) => (
+                {EXPENSE_CATEGORIES.map((cat) => (
                   <TouchableOpacity
                     key={cat.name}
                     style={{

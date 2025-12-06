@@ -4,7 +4,6 @@ import {
   ScrollView,
   RefreshControl,
   ActivityIndicator,
-  TouchableOpacity,
 } from "react-native";
 import React, { useState, useEffect, useCallback } from "react";
 import { useAuthStore } from "@/store/authStore";
@@ -12,26 +11,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import styles from "@/styles/home.styles";
 import colours from "@/constants/colours";
 import { SkeletonCard, SkeletonSummaryCard } from "@/components/Skeleton";
-
-interface Transaction {
-  _id: string;
-  amount: number;
-  category: string;
-  description?: string;
-  icon: string;
-  date: string;
-  type: "income" | "expense";
-}
-
-interface DashboardSummary {
-  totalIncome: number;
-  totalExpenses: number;
-  net: number;
-  transactionCount: {
-    income: number;
-    expenses: number;
-  };
-}
+import { Transaction, DashboardSummary } from "@/types";
 
 export default function Index() {
   const { token, isCheckingAuth, refreshDashboard } = useAuthStore() as { 
@@ -53,7 +33,6 @@ export default function Index() {
   const [hasMore, setHasMore] = useState(true);
 
   const API_URL = process.env.API_URL || "http://10.0.2.2:3001";
-  console.log("API_URL:", API_URL);
 
   const fetchDashboardSummary = async () => {
     try {

@@ -16,23 +16,7 @@ import styles from "@/styles/create.styles";
 import colours from "@/constants/colours";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { SkeletonCard } from "@/components/Skeleton";
-
-interface Income {
-  _id: string;
-  amount: number;
-  category: string;
-  description?: string;
-  icon: string;
-  date: string;
-}
-
-const CATEGORIES = [
-  { name: "Salary", icon: "money-check-alt" },
-  { name: "Investment", icon: "chart-line" },
-  { name: "Freelance", icon: "laptop-code" },
-  { name: "Gift", icon: "gift" },
-  { name: "Other", icon: "money-bill-wave" },
-];
+import { Income, INCOME_CATEGORIES } from "@/types";
 
 export default function Income() {
   const { token, isCheckingAuth, triggerDashboardRefresh } = useAuthStore() as { 
@@ -135,8 +119,6 @@ export default function Income() {
         body: JSON.stringify(incomeData),
       });
 
-      console.log(token)
-
       if (response.ok) {
         setModalVisible(false);
         resetForm();
@@ -179,7 +161,7 @@ export default function Income() {
     ]);
   };
 
-  const selectCategory = (cat: typeof CATEGORIES[0]) => {
+  const selectCategory = (cat: typeof INCOME_CATEGORIES[0]) => {
     setCategory(cat.name);
     setSelectedIcon(cat.icon);
   };
@@ -278,7 +260,7 @@ export default function Income() {
             <ScrollView>
               <Text style={[styles.textSecondary, { marginBottom: 8 }]}>Category</Text>
               <View style={{ flexDirection: "row", flexWrap: "wrap", marginBottom: 16 }}>
-                {CATEGORIES.map((cat) => (
+                {INCOME_CATEGORIES.map((cat) => (
                   <TouchableOpacity
                     key={cat.name}
                     style={{
