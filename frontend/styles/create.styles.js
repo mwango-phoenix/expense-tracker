@@ -16,7 +16,7 @@ const styles = StyleSheet.create({
 		backgroundColor: COLOURS.card,
 		borderRadius: 12,
 		padding: 16,
-		marginVertical: 8,
+		marginVertical: 5,
 		shadowColor: COLOURS.shadow,
 		shadowOffset: { width: 0, height: 2 },
 		shadowOpacity: 0.15,
@@ -38,10 +38,12 @@ const styles = StyleSheet.create({
 	text: {
 		color: COLOURS.textPrimary,
 		fontSize: 16,
+		lineHeight: 20,
 	},
 	textSecondary: {
 		color: COLOURS.textSecondary,
 		fontSize: 14,
+		lineHeight: 18,
 	},
 
 	// Input fields
@@ -112,6 +114,36 @@ const styles = StyleSheet.create({
 		backgroundColor: COLOURS.overlay,
 		justifyContent: 'center',
 		alignItems: 'center',
+	},
+
+	// Income/Expense card layouts
+	cardRow: {
+		flexDirection: 'row',
+		justifyContent: 'space-between',
+		alignItems: 'flex-start',
+	},
+	cardContent: {
+		flex: 1,
+		flexDirection: 'row',
+		alignItems: 'center',
+	},
+	cardDetails: {
+		flex: 1,
+	},
+	cardDescription: {
+		marginTop: 0,
+	},
+	cardDate: {
+		marginTop: 0,
+		fontSize: 12,
+	},
+
+	// Header section
+	headerRow: {
+		flexDirection: 'row',
+		justifyContent: 'space-between',
+		alignItems: 'flex-end',
+		marginVertical: 10,
 	},
 });
 
