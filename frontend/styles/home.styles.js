@@ -11,18 +11,17 @@ const styles = StyleSheet.create({
     color: colours.textPrimary,
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 16,
+    marginBottom: 10,
+  },
+  subHeader: {
+    color: colours.textPrimary,
+    fontSize: 18,
   },
   balanceCard: {
     backgroundColor: colours.card,
     borderRadius: 12,
-    padding: 20,
+    padding: 15,
     marginBottom: 20,
-    shadowColor: colours.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 2,
     borderWidth: 1,
     borderColor: colours.border,
   },
@@ -34,7 +33,6 @@ const styles = StyleSheet.create({
   incomeExpenseRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 12,
   },
   income: {
     color: colours.success,
@@ -47,13 +45,13 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   list: {
-    marginTop: 12,
+    marginTop: 5,
   },
   card: {
     backgroundColor: colours.card,
     borderRadius: 10,
     padding: 14,
-    marginVertical: 6,
+    marginVertical: 5,
     borderWidth: 1,
     borderColor: colours.border,
   },

@@ -148,7 +148,7 @@ export default function Index() {
 
   return (
     <ScrollView
-      style={[styles.container, { paddingTop: insets.top }]}
+      style={[styles.container, { paddingTop: insets.top + 10}]}
       refreshControl={
         <RefreshControl
           refreshing={refreshing}
@@ -190,20 +190,20 @@ export default function Index() {
 
         <View style={styles.incomeExpenseRow}>
           <View>
-            <Text style={{ color: colours.textSecondary, fontSize: 13, marginBottom: 4 }}>
+            <Text style={{ color: colours.textSecondary, fontSize: 13, marginBottom: 2 }}>
               Income
             </Text>
             <Text style={styles.income}>{formatCurrency(summary.totalIncome)}</Text>
           </View>
           <View style={{ alignItems: "flex-end" }}>
-            <Text style={{ color: colours.textSecondary, fontSize: 13, marginBottom: 4 }}>
+            <Text style={{ color: colours.textSecondary, fontSize: 13, marginBottom: 2}}>
               Expenses
             </Text>
             <Text style={styles.expense}>{formatCurrency(summary.totalExpenses)}</Text>
           </View>
         </View>
 
-        <View style={{ marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: colours.border }}>
+        <View style={{ marginTop: 10, paddingTop: 12, borderTopWidth: 1, borderTopColor: colours.border }}>
           <Text style={{ color: colours.textSecondary, fontSize: 12 }}>
             {summary.transactionCount.income + summary.transactionCount.expenses} transactions this period
           </Text>
@@ -212,7 +212,7 @@ export default function Index() {
       )}
 
       {/* Transactions List */}
-      <Text style={[styles.header, { fontSize: 18, marginBottom: 8 }]}>
+      <Text style={[styles.subHeader]}>
         Recent Transactions
       </Text>
 
@@ -223,7 +223,7 @@ export default function Index() {
           ))}
         </View>
       ) : transactions.length === 0 ? (
-        <View style={{ alignItems: "center", paddingVertical: 40 }}>
+        <View style={styles.list}>
           <Text style={{ color: colours.textSecondary, fontSize: 16 }}>
             No transactions yet
           </Text>
