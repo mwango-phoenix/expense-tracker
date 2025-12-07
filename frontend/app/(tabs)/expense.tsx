@@ -16,8 +16,9 @@ import colours from "@/constants/colours";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { SkeletonCard } from "@/components/Skeleton";
 import { Expense, EXPENSE_CATEGORIES } from "@/types";
+import DatePicker from "@/components/DatePicker";
 
-export default function Expense() {
+export default function ExpensePage() {
   const { token, isCheckingAuth, triggerDashboardRefresh } = useAuthStore() as { 
     token: string | null; 
     isCheckingAuth: boolean;
@@ -29,12 +30,16 @@ export default function Expense() {
   const [refreshing, setRefreshing] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
-  // Form state
-  const [amount, setAmount] = useState("");
-  const [category, setCategory] = useState("Food");
-  const [description, setDescription] = useState("");
-  const [selectedIcon, setSelectedIcon] = useState("utensils");
+  // Form state using Expense type (without _id)
+  const [formData, setFormData] = useState<Omit<Expense, "_id">>({
+    amount: 0,
+    category: "Food",
+    description: "",
+    icon: "utensils",
+    date: new Date().toISOString(),
+  });
 
   const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://10.0.2.2:3001";
 
@@ -69,10 +74,13 @@ export default function Expense() {
   }, []);
 
   const resetForm = () => {
-    setAmount("");
-    setCategory("Food");
-    setDescription("");
-    setSelectedIcon("utensils");
+    setFormData({
+      amount: 0,
+      category: "Food",
+      description: "",
+      icon: "utensils",
+      date: new Date().toISOString(),
+    });
     setEditingExpense(null);
   };
 
@@ -83,25 +91,28 @@ export default function Expense() {
 
   const openEditModal = (expense: Expense) => {
     setEditingExpense(expense);
-    setAmount(expense.amount.toString());
-    setCategory(expense.category);
-    setDescription(expense.description || "");
-    setSelectedIcon(expense.icon);
+    setFormData({
+      amount: expense.amount,
+      category: expense.category,
+      description: expense.description || "",
+      icon: expense.icon,
+      date: expense.date,
+    });
     setModalVisible(true);
   };
 
   const handleSubmit = async () => {
-    if (!amount || parseFloat(amount) <= 0) {
+    if (!formData.amount || formData.amount <= 0) {
       Alert.alert("Error", "Please enter a valid amount");
       return;
     }
 
     const expenseData = {
-      amount: parseFloat(amount),
-      category,
-      description,
-      icon: selectedIcon,
-      date: new Date().toISOString(),
+      amount: formData.amount,
+      category: formData.category,
+      description: formData.description,
+      icon: formData.icon,
+      date: formData.date,
     };
 
     try {
@@ -161,8 +172,11 @@ export default function Expense() {
   };
 
   const selectCategory = (cat: typeof EXPENSE_CATEGORIES[0]) => {
-    setCategory(cat.name);
-    setSelectedIcon(cat.icon);
+    setFormData(prev => ({
+      ...prev,
+      category: cat.name,
+      icon: cat.icon,
+    }));
   };
 
   const formatCurrency = (amount: number) => `$${amount.toFixed(2)}`;
@@ -263,7 +277,7 @@ export default function Expense() {
                   <TouchableOpacity
                     key={cat.name}
                     style={{
-                      backgroundColor: category === cat.name ? colours.primary : colours.surface,
+                      backgroundColor: formData.category === cat.name ? colours.primary : colours.surface,
                       paddingVertical: 8,
                       paddingHorizontal: 16,
                       borderRadius: 20,
@@ -276,10 +290,10 @@ export default function Expense() {
                     <FontAwesome5
                       name={cat.icon}
                       size={16}
-                      color={category === cat.name ? colours.background : colours.textPrimary}
+                      color={formData.category === cat.name ? colours.background : colours.textPrimary}
                       style={{ marginRight: 6 }}
                     />
-                    <Text style={{ color: category === cat.name ? colours.background : colours.textPrimary }}>
+                    <Text style={{ color: formData.category === cat.name ? colours.background : colours.textPrimary }}>
                       {cat.name}
                     </Text>
                   </TouchableOpacity>
@@ -292,18 +306,41 @@ export default function Expense() {
                 placeholder="0.00"
                 placeholderTextColor={colours.textDisabled}
                 keyboardType="decimal-pad"
-                value={amount}
-                onChangeText={setAmount}
+                value={formData.amount ? formData.amount.toString() : ""}
+                onChangeText={(text) => setFormData(prev => ({ ...prev, amount: parseFloat(text) || 0 }))}
               />
 
+              <Text style={[styles.textSecondary, { marginBottom: 8 }]}>Date</Text>
+              <TouchableOpacity
+                style={[styles.input, { justifyContent: "center" }]}
+                onPress={() => setShowDatePicker(true)}
+              >
+                <Text style={{ color: colours.textPrimary }}>
+                  {new Date(formData.date).toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                  })}
+                </Text>
+              </TouchableOpacity>
+              <DatePicker
+                visible={showDatePicker}
+                date={new Date(formData.date)}
+                onDateChange={(selectedDate: Date) => {
+                  setFormData((prev) => ({ ...prev, date: selectedDate.toISOString() }));
+                }}
+                onClose={() => {
+                  setShowDatePicker(false);
+                }}
+              />
               <Text style={[styles.textSecondary, { marginBottom: 8 }]}>Description (Optional)</Text>
               <TextInput
                 style={[styles.input, { minHeight: 80, textAlignVertical: "top" }]}
                 placeholder="Add notes..."
                 placeholderTextColor={colours.textDisabled}
                 multiline
-                value={description}
-                onChangeText={setDescription}
+                value={formData.description}
+                onChangeText={(text) => setFormData(prev => ({ ...prev, description: text }))}
               />
 
               <View style={{ flexDirection: "row", marginTop: 16 }}>
