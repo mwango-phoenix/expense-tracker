@@ -3,8 +3,6 @@ import {
   Text,
   ScrollView,
   TouchableOpacity,
-  TextInput,
-  Modal,
   RefreshControl,
   Alert,
 } from "react-native";
@@ -16,7 +14,8 @@ import colours from "@/constants/colours";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { SkeletonCard } from "@/components/Skeleton";
 import { Income, INCOME_CATEGORIES } from "@/types";
-import DatePicker from "@/components/DatePicker";
+import TransactionCard from "@/components/TransactionCard";
+import TransactionModal from "@/components/TransactionModal";
 
 export default function IncomePage() {
   const { token, isCheckingAuth, triggerDashboardRefresh } = useAuthStore() as {
@@ -30,15 +29,6 @@ export default function IncomePage() {
   const [refreshing, setRefreshing] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingIncome, setEditingIncome] = useState<Income | null>(null);
-  const [showDatePicker, setShowDatePicker] = useState(false);
-
-  const [formData, setFormData] = useState<Omit<Income, "_id">>({
-    amount: 0,
-    category: "Salary",
-    description: "",
-    icon: "money-check-alt",
-    date: new Date().toISOString(),
-  });
 
   const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://10.0.2.2:3001";
 
@@ -72,48 +62,21 @@ export default function IncomePage() {
     fetchIncomes();
   }, []);
 
-  const resetForm = () => {
-    setFormData({
-      amount: 0,
-      category: "Salary",
-      description: "",
-      icon: "money-check-alt",
-      date: new Date().toISOString(),
-    });
-    setEditingIncome(null);
-  };
-
   const openCreateModal = () => {
-    resetForm();
+    setEditingIncome(null);
     setModalVisible(true);
   };
 
   const openEditModal = (income: Income) => {
     setEditingIncome(income);
-    setFormData({
-      amount: income.amount,
-      category: income.category,
-      description: income.description || "",
-      icon: income.icon,
-      date: income.date,
-    });
     setModalVisible(true);
   };
 
-  const handleSubmit = async () => {
-    if (!formData.amount || formData.amount <= 0) {
-      Alert.alert("Error", "Please enter a valid amount");
-      return;
-    }
+  const handleCardPress = (income: Income) => {
+    openEditModal(income);
+  };
 
-    const incomeData = {
-      amount: formData.amount,
-      category: formData.category,
-      description: formData.description,
-      icon: formData.icon,
-      date: formData.date,
-    };
-
+  const handleSubmit = async (data: Omit<Income, "_id">) => {
     try {
       const url = editingIncome
         ? `${API_URL}/api/income/${editingIncome._id}`
@@ -125,12 +88,12 @@ export default function IncomePage() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(incomeData),
+        body: JSON.stringify(data),
       });
 
       if (response.ok) {
         setModalVisible(false);
-        resetForm();
+        setEditingIncome(null);
         fetchIncomes();
         triggerDashboardRefresh();
         Alert.alert(
@@ -177,36 +140,13 @@ export default function IncomePage() {
     );
   };
 
-  const selectCategory = (cat: (typeof INCOME_CATEGORIES)[0]) => {
-    setFormData((prev) => ({
-      ...prev,
-      category: cat.name,
-      icon: cat.icon,
-    }));
-  };
-
   const formatCurrency = (amount: number) => `$${amount.toFixed(2)}`;
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-  };
 
   const totalIncome = incomes.reduce((sum, income) => sum + income.amount, 0);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <View
-        style={{
-          flexDirection: "row",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 16,
-        }}
-      >
+      <View style={styles.headerRow}>
         <View>
           <Text style={styles.title}>Income</Text>
           <Text style={[styles.textSecondary, { fontSize: 16, marginTop: 4 }]}>
@@ -219,7 +159,7 @@ export default function IncomePage() {
         <TouchableOpacity
           style={[
             styles.button,
-            { paddingHorizontal: 20, paddingVertical: 10 },
+            { paddingHorizontal: 15, paddingVertical: 5, marginVertical: 0 },
           ]}
           onPress={openCreateModal}
         >
@@ -254,245 +194,28 @@ export default function IncomePage() {
           </View>
         ) : (
           incomes.map((income) => (
-            <View key={income._id} style={styles.card}>
-              <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                  alignItems: "flex-start",
-                }}
-              >
-                <View
-                  style={{
-                    flex: 1,
-                    flexDirection: "row",
-                    alignItems: "center",
-                  }}
-                >
-                  <FontAwesome5
-                    name={income.icon}
-                    size={24}
-                    color={colours.success}
-                    style={{ marginRight: 12 }}
-                  />
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.text}>{income.category}</Text>
-                    {income.description && (
-                      <Text style={[styles.textSecondary, { marginTop: 2 }]}>
-                        {income.description}
-                      </Text>
-                    )}
-                    <Text
-                      style={[
-                        styles.textSecondary,
-                        { marginTop: 4, fontSize: 12 },
-                      ]}
-                    >
-                      {formatDate(income.date)}
-                    </Text>
-                  </View>
-                </View>
-                <View style={{ alignItems: "flex-end" }}>
-                  <Text
-                    style={{
-                      fontSize: 18,
-                      fontWeight: "bold",
-                      color: colours.success,
-                    }}
-                  >
-                    {formatCurrency(income.amount)}
-                  </Text>
-                  <View style={{ flexDirection: "row", marginTop: 8 }}>
-                    <TouchableOpacity
-                      onPress={() => openEditModal(income)}
-                      style={{ marginRight: 12 }}
-                    >
-                      <FontAwesome5
-                        name="edit"
-                        size={18}
-                        color={colours.secondary}
-                      />
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={() => handleDelete(income._id)}>
-                      <FontAwesome5
-                        name="trash"
-                        size={18}
-                        color={colours.error}
-                      />
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              </View>
-            </View>
+            <TransactionCard
+              key={income._id}
+              transaction={{ ...income, type: "income" }}
+              type="income"
+              onPress={handleCardPress}
+            />
           ))
         )}
       </ScrollView>
 
-      {/* Add/Edit Modal */}
-      <Modal visible={modalVisible} transparent animationType="slide">
-        <View style={styles.overlay}>
-          <View
-            style={{
-              backgroundColor: colours.card,
-              borderRadius: 16,
-              padding: 24,
-              width: "90%",
-              maxHeight: "80%",
-            }}
-          >
-            <Text style={[styles.title, { marginBottom: 16 }]}>
-              {editingIncome ? "Edit Income" : "Add Income"}
-            </Text>
-
-            <ScrollView>
-              <Text style={[styles.textSecondary, { marginBottom: 8 }]}>
-                Category
-              </Text>
-              <View
-                style={{
-                  flexDirection: "row",
-                  flexWrap: "wrap",
-                  marginBottom: 16,
-                }}
-              >
-                {INCOME_CATEGORIES.map((cat) => (
-                  <TouchableOpacity
-                    key={cat.name}
-                    style={{
-                      backgroundColor:
-                        formData.category === cat.name
-                          ? colours.primary
-                          : colours.surface,
-                      paddingVertical: 8,
-                      paddingHorizontal: 16,
-                      borderRadius: 20,
-                      margin: 4,
-                      flexDirection: "row",
-                      alignItems: "center",
-                    }}
-                    onPress={() => selectCategory(cat)}
-                  >
-                    <FontAwesome5
-                      name={cat.icon}
-                      size={16}
-                      color={
-                        formData.category === cat.name
-                          ? colours.background
-                          : colours.textPrimary
-                      }
-                      style={{ marginRight: 6 }}
-                    />
-                    <Text
-                      style={{
-                        color:
-                          formData.category === cat.name
-                            ? colours.background
-                            : colours.textPrimary,
-                      }}
-                    >
-                      {cat.name}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              <Text style={[styles.textSecondary, { marginBottom: 8 }]}>
-                Amount
-              </Text>
-              <TextInput
-                style={styles.input}
-                placeholder="0.00"
-                placeholderTextColor={colours.textDisabled}
-                keyboardType="decimal-pad"
-                value={formData.amount ? formData.amount.toString() : ""}
-                onChangeText={(text) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    amount: parseFloat(text) || 0,
-                  }))
-                }
-              />
-
-              <Text style={[styles.textSecondary, { marginBottom: 8 }]}>
-                Date
-              </Text>
-              <TouchableOpacity
-                style={[styles.input, { justifyContent: "center" }]}
-                onPress={() => setShowDatePicker(true)}
-              >
-                <Text style={{ color: colours.textPrimary }}>
-                  {new Date(formData.date).toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                  })}
-                </Text>
-              </TouchableOpacity>
-              <DatePicker
-                visible={showDatePicker}
-                date={new Date(formData.date)}
-                onDateChange={(selectedDate: Date) => {
-                  setFormData((prev) => ({
-                    ...prev,
-                    date: selectedDate.toISOString(),
-                  }));
-                }}
-                onClose={() => {
-                  setShowDatePicker(false);
-                }}
-              />
-
-              <Text style={[styles.textSecondary, { marginBottom: 8 }]}>
-                Description (Optional)
-              </Text>
-              <TextInput
-                style={[
-                  styles.input,
-                  { minHeight: 80, textAlignVertical: "top" },
-                ]}
-                placeholder="Add notes..."
-                placeholderTextColor={colours.textDisabled}
-                multiline
-                value={formData.description}
-                onChangeText={(text) =>
-                  setFormData((prev) => ({ ...prev, description: text }))
-                }
-              />
-
-              <View style={{ flexDirection: "row", marginTop: 16 }}>
-                <TouchableOpacity
-                  style={[
-                    styles.button,
-                    {
-                      flex: 1,
-                      marginRight: 8,
-                      backgroundColor: colours.surface,
-                    },
-                  ]}
-                  onPress={() => {
-                    setModalVisible(false);
-                    resetForm();
-                  }}
-                >
-                  <Text
-                    style={[styles.buttonText, { color: colours.textPrimary }]}
-                  >
-                    Cancel
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.button, { flex: 1, marginLeft: 8 }]}
-                  onPress={handleSubmit}
-                >
-                  <Text style={styles.buttonText}>
-                    {editingIncome ? "Update" : "Add"}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </ScrollView>
-          </View>
-        </View>
-      </Modal>
+      <TransactionModal
+        visible={modalVisible}
+        type="income"
+        categories={INCOME_CATEGORIES}
+        editingTransaction={editingIncome}
+        onClose={() => {
+          setModalVisible(false);
+          setEditingIncome(null);
+        }}
+        onSubmit={handleSubmit}
+        onDelete={handleDelete}
+      />
     </View>
   );
 }

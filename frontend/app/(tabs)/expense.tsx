@@ -3,8 +3,6 @@ import {
   Text,
   ScrollView,
   TouchableOpacity,
-  TextInput,
-  Modal,
   RefreshControl,
   Alert,
 } from "react-native";
@@ -16,11 +14,12 @@ import colours from "@/constants/colours";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { SkeletonCard } from "@/components/Skeleton";
 import { Expense, EXPENSE_CATEGORIES } from "@/types";
-import DatePicker from "@/components/DatePicker";
+import TransactionCard from "@/components/TransactionCard";
+import TransactionModal from "@/components/TransactionModal";
 
 export default function ExpensePage() {
-  const { token, isCheckingAuth, triggerDashboardRefresh } = useAuthStore() as { 
-    token: string | null; 
+  const { token, isCheckingAuth, triggerDashboardRefresh } = useAuthStore() as {
+    token: string | null;
     isCheckingAuth: boolean;
     triggerDashboardRefresh: () => void;
   };
@@ -30,16 +29,6 @@ export default function ExpensePage() {
   const [refreshing, setRefreshing] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
-  const [showDatePicker, setShowDatePicker] = useState(false);
-
-  // Form state using Expense type (without _id)
-  const [formData, setFormData] = useState<Omit<Expense, "_id">>({
-    amount: 0,
-    category: "Food",
-    description: "",
-    icon: "utensils",
-    date: new Date().toISOString(),
-  });
 
   const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://10.0.2.2:3001";
 
@@ -73,48 +62,21 @@ export default function ExpensePage() {
     fetchExpenses();
   }, []);
 
-  const resetForm = () => {
-    setFormData({
-      amount: 0,
-      category: "Food",
-      description: "",
-      icon: "utensils",
-      date: new Date().toISOString(),
-    });
-    setEditingExpense(null);
-  };
-
   const openCreateModal = () => {
-    resetForm();
+    setEditingExpense(null);
     setModalVisible(true);
   };
 
   const openEditModal = (expense: Expense) => {
     setEditingExpense(expense);
-    setFormData({
-      amount: expense.amount,
-      category: expense.category,
-      description: expense.description || "",
-      icon: expense.icon,
-      date: expense.date,
-    });
     setModalVisible(true);
   };
 
-  const handleSubmit = async () => {
-    if (!formData.amount || formData.amount <= 0) {
-      Alert.alert("Error", "Please enter a valid amount");
-      return;
-    }
+  const handleCardPress = (expense: Expense) => {
+    openEditModal(expense);
+  };
 
-    const expenseData = {
-      amount: formData.amount,
-      category: formData.category,
-      description: formData.description,
-      icon: formData.icon,
-      date: formData.date,
-    };
-
+  const handleSubmit = async (data: Omit<Expense, "_id">) => {
     try {
       const url = editingExpense
         ? `${API_URL}/api/expense/${editingExpense._id}`
@@ -126,15 +88,18 @@ export default function ExpensePage() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(expenseData),
+        body: JSON.stringify(data),
       });
 
       if (response.ok) {
         setModalVisible(false);
-        resetForm();
+        setEditingExpense(null);
         fetchExpenses();
         triggerDashboardRefresh();
-        Alert.alert("Success", editingExpense ? "Expense updated!" : "Expense added!");
+        Alert.alert(
+          "Success",
+          editingExpense ? "Expense updated!" : "Expense added!"
+        );
       } else {
         const error = await response.json();
         Alert.alert("Error", error.message || "Failed to save expense");
@@ -146,62 +111,59 @@ export default function ExpensePage() {
   };
 
   const handleDelete = (id: string) => {
-    Alert.alert("Delete Expense", "Are you sure you want to delete this expense?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: async () => {
-          try {
-            const response = await fetch(`${API_URL}/api/expense/${id}`, {
-              method: "DELETE",
-              headers: { Authorization: `Bearer ${token}` },
-            });
+    Alert.alert(
+      "Delete Expense",
+      "Are you sure you want to delete this expense?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const response = await fetch(`${API_URL}/api/expense/${id}`, {
+                method: "DELETE",
+                headers: { Authorization: `Bearer ${token}` },
+              });
 
-            if (response.ok) {
-              fetchExpenses();
-              triggerDashboardRefresh();
-              Alert.alert("Success", "Expense deleted");
+              if (response.ok) {
+                fetchExpenses();
+                triggerDashboardRefresh();
+                Alert.alert("Success", "Expense deleted");
+              }
+            } catch (error) {
+              Alert.alert("Error", "Failed to delete expense");
             }
-          } catch (error) {
-            Alert.alert("Error", "Failed to delete expense");
-          }
+          },
         },
-      },
-    ]);
-  };
-
-  const selectCategory = (cat: typeof EXPENSE_CATEGORIES[0]) => {
-    setFormData(prev => ({
-      ...prev,
-      category: cat.name,
-      icon: cat.icon,
-    }));
+      ]
+    );
   };
 
   const formatCurrency = (amount: number) => `$${amount.toFixed(2)}`;
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-  };
 
-  const totalExpense = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+  const totalExpense = expenses.reduce(
+    (sum, expense) => sum + expense.amount,
+    0
+  );
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+      <View style={styles.headerRow}>
         <View>
           <Text style={styles.title}>Expenses</Text>
           <Text style={[styles.textSecondary, { fontSize: 16, marginTop: 4 }]}>
-            Total: <Text style={{ color: colours.error, fontWeight: "bold" }}>{formatCurrency(totalExpense)}</Text>
+            Total:{" "}
+            <Text style={{ color: colours.error, fontWeight: "bold" }}>
+              {formatCurrency(totalExpense)}
+            </Text>
           </Text>
         </View>
         <TouchableOpacity
-          style={[styles.button, { paddingHorizontal: 20, paddingVertical: 10 }]}
+          style={[
+            styles.button,
+            { paddingHorizontal: 15, paddingVertical: 5, marginVertical: 0 },
+          ]}
           onPress={openCreateModal}
         >
           <Text style={styles.buttonText}>+ Add</Text>
@@ -211,156 +173,52 @@ export default function ExpensePage() {
       <ScrollView
         style={styles.list}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colours.primary} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={colours.primary}
+          />
         }
       >
         {loading ? (
           [1, 2, 3, 4, 5].map((i) => <SkeletonCard key={i} />)
         ) : expenses.length === 0 ? (
           <View style={{ alignItems: "center", paddingVertical: 40 }}>
-            <FontAwesome5 name="wallet" size={48} color={colours.textSecondary} />
-            <Text style={[styles.textSecondary, { marginTop: 16, fontSize: 16 }]}>No expense records yet</Text>
+            <FontAwesome5
+              name="wallet"
+              size={48}
+              color={colours.textSecondary}
+            />
+            <Text
+              style={[styles.textSecondary, { marginTop: 16, fontSize: 16 }]}
+            >
+              No expense records yet
+            </Text>
           </View>
         ) : (
           expenses.map((expense) => (
-            <View key={expense._id} style={styles.card}>
-              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
-                <View style={{ flex: 1, flexDirection: "row", alignItems: "center" }}>
-                  <FontAwesome5 name={expense.icon} size={24} color={colours.error} style={{ marginRight: 12 }} />
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.text}>{expense.category}</Text>
-                    {expense.description && (
-                      <Text style={[styles.textSecondary, { marginTop: 2 }]}>{expense.description}</Text>
-                    )}
-                    <Text style={[styles.textSecondary, { marginTop: 4, fontSize: 12 }]}>{formatDate(expense.date)}</Text>
-                  </View>
-                </View>
-                <View style={{ alignItems: "flex-end" }}>
-                  <Text style={{ fontSize: 18, fontWeight: "bold", color: colours.error }}>
-                    {formatCurrency(expense.amount)}
-                  </Text>
-                  <View style={{ flexDirection: "row", marginTop: 8 }}>
-                    <TouchableOpacity onPress={() => openEditModal(expense)} style={{ marginRight: 12 }}>
-                      <FontAwesome5 name="edit" size={18} color={colours.secondary} />
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={() => handleDelete(expense._id)}>
-                      <FontAwesome5 name="trash" size={18} color={colours.error} />
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              </View>
-            </View>
+            <TransactionCard
+              key={expense._id}
+              transaction={{ ...expense, type: "expense" }}
+              type="expense"
+              onPress={handleCardPress}
+            />
           ))
         )}
       </ScrollView>
 
-      {/* Add/Edit Modal */}
-      <Modal visible={modalVisible} transparent animationType="slide">
-        <View style={styles.overlay}>
-          <View
-            style={{
-              backgroundColor: colours.card,
-              borderRadius: 16,
-              padding: 24,
-              width: "90%",
-              maxHeight: "80%",
-            }}
-          >
-            <Text style={[styles.title, { marginBottom: 16 }]}>
-              {editingExpense ? "Edit Expense" : "Add Expense"}
-            </Text>
-
-            <ScrollView>
-              <Text style={[styles.textSecondary, { marginBottom: 8 }]}>Category</Text>
-              <View style={{ flexDirection: "row", flexWrap: "wrap", marginBottom: 16 }}>
-                {EXPENSE_CATEGORIES.map((cat) => (
-                  <TouchableOpacity
-                    key={cat.name}
-                    style={{
-                      backgroundColor: formData.category === cat.name ? colours.primary : colours.surface,
-                      paddingVertical: 8,
-                      paddingHorizontal: 16,
-                      borderRadius: 20,
-                      margin: 4,
-                      flexDirection: "row",
-                      alignItems: "center",
-                    }}
-                    onPress={() => selectCategory(cat)}
-                  >
-                    <FontAwesome5
-                      name={cat.icon}
-                      size={16}
-                      color={formData.category === cat.name ? colours.background : colours.textPrimary}
-                      style={{ marginRight: 6 }}
-                    />
-                    <Text style={{ color: formData.category === cat.name ? colours.background : colours.textPrimary }}>
-                      {cat.name}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              <Text style={[styles.textSecondary, { marginBottom: 8 }]}>Amount</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="0.00"
-                placeholderTextColor={colours.textDisabled}
-                keyboardType="decimal-pad"
-                value={formData.amount ? formData.amount.toString() : ""}
-                onChangeText={(text) => setFormData(prev => ({ ...prev, amount: parseFloat(text) || 0 }))}
-              />
-
-              <Text style={[styles.textSecondary, { marginBottom: 8 }]}>Date</Text>
-              <TouchableOpacity
-                style={[styles.input, { justifyContent: "center" }]}
-                onPress={() => setShowDatePicker(true)}
-              >
-                <Text style={{ color: colours.textPrimary }}>
-                  {new Date(formData.date).toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                  })}
-                </Text>
-              </TouchableOpacity>
-              <DatePicker
-                visible={showDatePicker}
-                date={new Date(formData.date)}
-                onDateChange={(selectedDate: Date) => {
-                  setFormData((prev) => ({ ...prev, date: selectedDate.toISOString() }));
-                }}
-                onClose={() => {
-                  setShowDatePicker(false);
-                }}
-              />
-              <Text style={[styles.textSecondary, { marginBottom: 8 }]}>Description (Optional)</Text>
-              <TextInput
-                style={[styles.input, { minHeight: 80, textAlignVertical: "top" }]}
-                placeholder="Add notes..."
-                placeholderTextColor={colours.textDisabled}
-                multiline
-                value={formData.description}
-                onChangeText={(text) => setFormData(prev => ({ ...prev, description: text }))}
-              />
-
-              <View style={{ flexDirection: "row", marginTop: 16 }}>
-                <TouchableOpacity
-                  style={[styles.button, { flex: 1, marginRight: 8, backgroundColor: colours.surface }]}
-                  onPress={() => {
-                    setModalVisible(false);
-                    resetForm();
-                  }}
-                >
-                  <Text style={[styles.buttonText, { color: colours.textPrimary }]}>Cancel</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={[styles.button, { flex: 1, marginLeft: 8 }]} onPress={handleSubmit}>
-                  <Text style={styles.buttonText}>{editingExpense ? "Update" : "Add"}</Text>
-                </TouchableOpacity>
-              </View>
-            </ScrollView>
-          </View>
-        </View>
-      </Modal>
+      <TransactionModal
+        visible={modalVisible}
+        type="expense"
+        categories={EXPENSE_CATEGORIES}
+        editingTransaction={editingExpense}
+        onClose={() => {
+          setModalVisible(false);
+          setEditingExpense(null);
+        }}
+        onSubmit={handleSubmit}
+        onDelete={handleDelete}
+      />
     </View>
   );
 }
