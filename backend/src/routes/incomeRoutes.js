@@ -17,7 +17,7 @@ const categoryIcons = {
 
 // POST /api/income - Add a new income record
 router.post("/", authMiddleware, async (req, res) => {
-  const { amount, category, description, icon, date } = req.body;
+  const { title, amount, category, description, icon, date } = req.body;
   try {
     if (!amount || !category || !icon) {
       return res
@@ -32,6 +32,7 @@ router.post("/", authMiddleware, async (req, res) => {
 
     const newIncome = await Income.create({
       user: req.user._id,
+      title,
       amount,
       category,
       description,

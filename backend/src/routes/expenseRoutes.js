@@ -8,7 +8,7 @@ const router = express.Router();
 
 // POST /api/expense - Add a new expense record
 router.post("/", authMiddleware, async (req, res) => {
-  const { amount, category, description, icon, date } = req.body;
+  const { title, amount, category, description, icon, date } = req.body;
   try {
     if (!amount || !category || !icon) {
       return res
@@ -23,6 +23,7 @@ router.post("/", authMiddleware, async (req, res) => {
 
     const newExpense = await Expense.create({
       user: req.user._id,
+      title,
       amount,
       category,
       description,

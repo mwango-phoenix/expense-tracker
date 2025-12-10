@@ -4,6 +4,7 @@ export interface Transaction {
   _id: string;
   amount: number;
   category: string;
+  title?: string;
   description?: string;
   icon: string;
   date: string;
@@ -24,6 +25,7 @@ export interface Income {
   _id: string;
   amount: number;
   category: string;
+  title?: string;
   description?: string;
   icon: string;
   date: string;
@@ -33,6 +35,7 @@ export interface Expense {
   _id: string;
   amount: number;
   category: string;
+  title?: string;
   description?: string;
   icon: string;
   date: string;

@@ -42,6 +42,7 @@ export default function TransactionModal({
   const [formData, setFormData] = useState<Omit<Transaction, "_id" | "type">>({
     amount: 0,
     category: categories[0]?.name || "",
+    title: "",
     description: "",
     icon: categories[0]?.icon || "",
     date: new Date().toISOString(),
@@ -52,6 +53,7 @@ export default function TransactionModal({
       setFormData({
         amount: editingTransaction.amount,
         category: editingTransaction.category,
+        title: editingTransaction.title || "",
         description: editingTransaction.description || "",
         icon: editingTransaction.icon,
         date: editingTransaction.date,
@@ -60,6 +62,7 @@ export default function TransactionModal({
       setFormData({
         amount: 0,
         category: categories[0]?.name || "",
+        title: "",
         description: "",
         icon: categories[0]?.icon || "",
         date: new Date().toISOString(),
@@ -98,13 +101,7 @@ export default function TransactionModal({
     <Modal visible={visible} transparent animationType="slide">
       <View style={styles.overlay}>
         <View
-          style={{
-            backgroundColor: colours.card,
-            borderRadius: 16,
-            padding: 24,
-            width: "90%",
-            maxHeight: "80%",
-          }}
+          style={styles.modalCard}
         >
           <View
             style={{
@@ -174,7 +171,18 @@ export default function TransactionModal({
               ))}
             </View>
 
-            <Text style={[styles.textSecondary, { marginBottom: 8 }]}>
+            <Text style={[styles.textSecondary]}>
+              Title
+            </Text>
+            <TextInput
+              style={styles.input}
+              value={formData.title}
+              onChangeText={(text) =>
+                setFormData((prev) => ({ ...prev, title: text }))
+              }
+            />
+
+            <Text style={[styles.textSecondary]}>
               Amount
             </Text>
             <TextInput
@@ -191,7 +199,7 @@ export default function TransactionModal({
               }
             />
 
-            <Text style={[styles.textSecondary, { marginBottom: 8 }]}>
+            <Text style={[styles.textSecondary]}>
               Date
             </Text>
             <TouchableOpacity
@@ -220,7 +228,7 @@ export default function TransactionModal({
               }}
             />
 
-            <Text style={[styles.textSecondary, { marginBottom: 8 }]}>
+            <Text style={[styles.textSecondary]}>
               Description (Optional)
             </Text>
             <TextInput
@@ -237,7 +245,7 @@ export default function TransactionModal({
               }
             />
 
-            <View style={{ flexDirection: "row", marginTop: 16 }}>
+            <View style={{ flexDirection: "row", marginTop: 10 }}>
               <TouchableOpacity
                 style={[
                   styles.button,

@@ -12,6 +12,7 @@ import styles from "@/styles/home.styles";
 import colours from "@/constants/colours";
 import { SkeletonCard, SkeletonSummaryCard } from "@/components/Skeleton";
 import { Transaction, DashboardSummary } from "@/types";
+import TransactionCard from "@/components/TransactionCard";
 
 export default function Index() {
   const { token, isCheckingAuth, refreshDashboard } = useAuthStore() as { 
@@ -231,29 +232,12 @@ export default function Index() {
       ) : (
         <View style={styles.list}>
           {transactions.map((transaction) => (
-            <View key={transaction._id} style={styles.card}>
-              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.itemText}>{transaction.category}</Text>
-                  {transaction.description && (
-                    <Text style={[styles.itemDate, { marginTop: 2 }]}>
-                      {transaction.description}
-                    </Text>
-                  )}
-                  <Text style={styles.itemDate}>{formatDate(transaction.date)}</Text>
-                </View>
-                <Text
-                  style={{
-                    fontSize: 18,
-                    fontWeight: "bold",
-                    color: transaction.type === "income" ? colours.success : colours.error,
-                  }}
-                >
-                  {transaction.type === "income" ? "+" : "-"}
-                  {formatCurrency(transaction.amount)}
-                </Text>
-              </View>
-            </View>
+            <TransactionCard
+              key={transaction._id}
+              transaction={transaction}
+              type={transaction.type}
+              onPress={() => {}}
+            />
           ))}
 
           {hasMore && (

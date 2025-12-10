@@ -42,7 +42,7 @@ export default function TransactionCard({
             style={{ marginRight: 12 }}
           />
           <View style={styles.cardDetails}>
-            <Text style={styles.text}>{transaction.category}</Text>
+            <Text style={styles.text}>{transaction.title || transaction.category}</Text>
             {transaction.description && (
               <Text style={[styles.textSecondary, styles.cardDescription]}>
                 {transaction.description}
