@@ -199,6 +199,7 @@ export default function IncomePage() {
               transaction={{ ...income, type: "income" }}
               type="income"
               onPress={handleCardPress}
+              showChevron={true}
             />
           ))
         )}

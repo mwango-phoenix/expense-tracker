@@ -8,12 +8,14 @@ interface TransactionCardProps {
   transaction: Transaction;
   type: "income" | "expense";
   onPress: (transaction: Transaction) => void;
+  showChevron?: boolean;
 }
 
 export default function TransactionCard({
   transaction,
   type,
   onPress,
+  showChevron = false,
 }: TransactionCardProps) {
   const formatCurrency = (amount: number) => `$${amount.toFixed(2)}`;
   const formatDate = (dateString: string) => {
@@ -39,7 +41,7 @@ export default function TransactionCard({
             name={transaction.icon}
             size={24}
             color={color}
-            style={{ marginRight: 12 }}
+            style={{ marginRight: 20 }}
           />
           <View style={styles.cardDetails}>
             <Text style={styles.text}>{transaction.title || transaction.category}</Text>
@@ -56,7 +58,7 @@ export default function TransactionCard({
         <View style={{ alignItems: "flex-end", justifyContent: "center" }}>
           <Text
             style={{
-              fontSize: 18,
+              fontSize: 20,
               fontWeight: "bold",
               color: color,
             }}
@@ -64,6 +66,14 @@ export default function TransactionCard({
             {formatCurrency(transaction.amount)}
           </Text>
         </View>
+        {showChevron && (
+          <FontAwesome5
+            name="chevron-right"
+            size={16}
+            color={colours.textDisabled}
+            style={{ marginLeft: 20 }}
+          />
+        )}
       </View>
     </TouchableOpacity>
   );

@@ -202,6 +202,7 @@ export default function ExpensePage() {
               transaction={{ ...expense, type: "expense" }}
               type="expense"
               onPress={handleCardPress}
+              showChevron={true}
             />
           ))
         )}
