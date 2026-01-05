@@ -1,8 +1,9 @@
 // components/SpendingChart.tsx
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { PieChart } from 'react-native-gifted-charts';
-import { colours } from '@/constants/colours';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { PieChart, BarChart } from 'react-native-gifted-charts';
+import { Ionicons } from '@expo/vector-icons';
+import COLOURS from "../constants/colours";
 import styles from '@/styles/chart.styles';
 
 
@@ -16,9 +17,11 @@ export interface CategoryBreakdownItem {
 interface SpendingChartProps {
   data: CategoryBreakdownItem[];
   totalExpenses: number;
+  chartType?: 'pie' | 'bar';
 }
 
-export default function SpendingChart({ data, totalExpenses }: SpendingChartProps) {
+export default function SpendingChart({ data, totalExpenses, chartType = 'pie' }: SpendingChartProps) {
+  const [selectedBar, setSelectedBar] = useState<number | null>(null);
 
   const formatCurrency = (amount: number) => {
     return `$${amount.toFixed(2)}`;
@@ -42,12 +45,74 @@ export default function SpendingChart({ data, totalExpenses }: SpendingChartProp
     );
   };
 
-  if (!data || data.length === 0) return null;
+  const renderBarChart = () => {
+    const maxValue = Math.max(...data.map(d => d.value));
+    const roundedMax = Math.ceil(maxValue / 10) * 10;
+    const stepValue = roundedMax / 5;
 
-  return (
-    <View style={styles.container}>
-      <Text style={styles.header}>Monthly Spending</Text>
+    const barData = data.map((item, index) => ({
+      value: item.value,
+      label: item.text.length > 8 ? item.text.substring(0, 8) + '...' : item.text,
+      frontColor: item.color,
+      labelTextStyle: { color: COLOURS.textSecondary, fontSize: 10 },
+      onPress: () => setSelectedBar(index),
+    }));
 
+    return (
+      <View style={styles.barChartContainer}>
+        <BarChart
+          data={barData}
+          barWidth={32}
+          spacing={20}
+          roundedTop
+          roundedBottom
+          hideRules={false}
+          rulesColor={COLOURS.border}
+          rulesType="solid"
+          xAxisThickness={1}
+          yAxisThickness={1}
+          xAxisColor={COLOURS.border}
+          yAxisColor={COLOURS.border}
+          yAxisTextStyle={{ color: COLOURS.textSecondary, fontSize: 10 }}
+          noOfSections={5}
+          maxValue={roundedMax}
+          stepValue={stepValue}
+          yAxisLabelTexts={[
+            '0',
+            formatCurrency(stepValue),
+            formatCurrency(stepValue * 2),
+            formatCurrency(stepValue * 3),
+            formatCurrency(stepValue * 4),
+            formatCurrency(roundedMax),
+          ]}
+          isAnimated
+          animationDuration={800}
+          barBorderRadius={4}
+        />
+        {selectedBar !== null && (
+          <View style={styles.selectedBarInfo}>
+            <View style={styles.selectedBarHeader}>
+              <Text style={styles.selectedBarLabel}>{data[selectedBar].text}</Text>
+              <TouchableOpacity 
+                onPress={() => setSelectedBar(null)}
+                style={styles.closeButton}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="close-circle" size={24} color={COLOURS.textSecondary} />
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.selectedBarValue}>{formatCurrency(data[selectedBar].value)}</Text>
+            <Text style={styles.selectedBarPercentage}>
+              {((data[selectedBar].value / totalExpenses) * 100).toFixed(1)}% of total
+            </Text>
+          </View>
+        )}
+      </View>
+    );
+  };
+
+  const renderPieChart = () => {
+    return (
       <View style={styles.chartRow}>
         {/* The Donut Chart */}
         <View style={styles.chartWrapper}>
@@ -57,7 +122,7 @@ export default function SpendingChart({ data, totalExpenses }: SpendingChartProp
             showText={false}
             radius={70}
             innerRadius={45}
-            innerCircleColor={colours.cardBackground}
+            innerCircleColor={COLOURS.card}
             centerLabelComponent={() => {
               return (
                 <View style={styles.centerLabel}>
@@ -74,6 +139,16 @@ export default function SpendingChart({ data, totalExpenses }: SpendingChartProp
         {/* The Legend List */}
         {renderLegend()}
       </View>
+    );
+  };
+
+  if (!data || data.length === 0) return null;
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.header}>Monthly Spending</Text>
+      
+      {chartType === 'pie' ? renderPieChart() : renderBarChart()}
     </View>
   );
 }
