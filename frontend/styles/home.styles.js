@@ -7,11 +7,23 @@ const styles = StyleSheet.create({
     backgroundColor: colours.background,
     padding: 20,
   },
+  headerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
   header: {
     color: colours.textPrimary,
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 10,
+  },
+  logoutButton: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: colours.card,
+    borderWidth: 1,
+    borderColor: colours.border,
   },
   subHeader: {
     color: colours.textPrimary,

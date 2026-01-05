@@ -4,6 +4,8 @@ import {
   ScrollView,
   RefreshControl,
   ActivityIndicator,
+  TouchableOpacity,
+  Alert,
 } from "react-native";
 import React, { useState, useEffect, useCallback } from "react";
 import { useAuthStore } from "@/store/authStore";
@@ -13,12 +15,14 @@ import colours from "@/constants/colours";
 import { SkeletonCard, SkeletonSummaryCard } from "@/components/Skeleton";
 import { Transaction, DashboardSummary } from "@/types";
 import TransactionCard from "@/components/TransactionCard";
+import { Ionicons } from "@expo/vector-icons";
 
 export default function Index() {
-  const { token, isCheckingAuth, refreshDashboard } = useAuthStore() as { 
+  const { token, isCheckingAuth, refreshDashboard, logout } = useAuthStore() as { 
     token: string | null; 
     isCheckingAuth: boolean;
     refreshDashboard: number;
+    logout: () => Promise<void>;
   };
   const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(true);
@@ -147,6 +151,13 @@ export default function Index() {
     });
   };
 
+  const handleLogout = () => {
+    Alert.alert("Logout", "Are you sure you want to logout?", [
+      { text: "Cancel", style: "cancel" },
+      { text: "Logout", onPress: () => logout(), style: "destructive" },
+    ]);
+  };
+
   return (
     <ScrollView
       style={[styles.container, { paddingTop: insets.top + 10}]}
@@ -167,17 +178,28 @@ export default function Index() {
       }}
       scrollEventThrottle={400}
     >
-      <Text style={styles.header}>Dashboard</Text>
-
+      <View style={styles.headerContainer}>
+        <Text style={styles.header}>Dashboard</Text>
+        <TouchableOpacity 
+          onPress={handleLogout}
+          style={styles.logoutButton}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="log-out-outline" size={24} color={colours.error} />
+        </TouchableOpacity>
+      </View>
       {/* Summary Card */}
       {loading ? (
         <SkeletonSummaryCard />
       ) : (
       <View style={styles.balanceCard}>
         <View style={{ marginBottom: 16 }}>
-          <Text style={{ color: colours.textSecondary, fontSize: 14, marginBottom: 4 }}>
-            Net Balance
-          </Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Text style={{ color: colours.textSecondary, fontSize: 14, marginBottom: 4 }}>
+              Net Balance
+            </Text>
+            <Ionicons name="pie-chart-outline" size={20} color={colours.primary} />
+          </View>
           <Text
             style={{
               fontSize: 32,
