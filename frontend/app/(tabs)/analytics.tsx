@@ -9,10 +9,11 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import COLOURS from '@/constants/colours';
+import colours from '@/constants/colours';
 import SpendingChart, { CategoryBreakdownItem } from '@/components/SpendingChart';
 import { useAuthStore } from '@/store/authStore';
 import styles from '@/styles/home.styles';
+import analyticsStyles from '@/styles/analytics.styles';
 
 export default function Analytics() {
   const { token } = useAuthStore() as { token: string | null };
@@ -22,18 +23,25 @@ export default function Analytics() {
   const [chartData, setChartData] = useState<CategoryBreakdownItem[]>([]);
   const [totalExpenses, setTotalExpenses] = useState(0);
   const [chartType, setChartType] = useState<'pie' | 'bar'>('pie');
+  const [weeklyData, setWeeklyData] = useState<{
+    currentWeek: number;
+    previousWeek: number;
+    difference: number;
+    percentageChange: number;
+  } | null>(null);
+  const [totalSpendingExpanded, setTotalSpendingExpanded] = useState(false);
 
   const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://10.0.2.2:3001";
 
   const categoryColors: { [key: string]: string } = {
-    Food: COLOURS.primary,
-    Transport: COLOURS.secondary,
-    Entertainment: COLOURS.warning,
+    Food: colours.primary,
+    Transport: colours.secondary,
+    Entertainment: colours.warning,
     Shopping: '#A78BFA',
     Bills: '#FB923C',
     Healthcare: '#F472B6',
     Education: '#34D399',
-    Other: COLOURS.info,
+    Other: colours.info,
   };
 
   const fetchCategoryBreakdown = async () => {
@@ -52,7 +60,7 @@ export default function Analytics() {
         const formattedData: CategoryBreakdownItem[] = Object.entries(breakdown).map(
           ([category, value]) => ({
             value: value as number,
-            color: categoryColors[category] || COLOURS.textDisabled,
+            color: categoryColors[category] || colours.textDisabled,
             text: category,
           })
         );
@@ -70,49 +78,169 @@ export default function Analytics() {
     }
   };
 
+  const fetchWeeklyComparison = async () => {
+    try {
+      // Get current week dates
+      const now = new Date();
+      const currentWeekStart = new Date(now);
+      currentWeekStart.setDate(now.getDate() - now.getDay()); // Sunday
+      currentWeekStart.setHours(0, 0, 0, 0);
+      
+      const currentWeekEnd = new Date(currentWeekStart);
+      currentWeekEnd.setDate(currentWeekStart.getDate() + 6); // Saturday
+      currentWeekEnd.setHours(23, 59, 59, 999);
+
+      // Get previous week dates
+      const previousWeekStart = new Date(currentWeekStart);
+      previousWeekStart.setDate(currentWeekStart.getDate() - 7);
+      
+      const previousWeekEnd = new Date(currentWeekStart);
+      previousWeekEnd.setDate(currentWeekStart.getDate() - 1);
+      previousWeekEnd.setHours(23, 59, 59, 999);
+
+      // Fetch current week data
+      const currentWeekResponse = await fetch(
+        `${API_URL}/api/dashboard/summary?period=week&type=expense&startDate=${currentWeekStart.toISOString()}&endDate=${currentWeekEnd.toISOString()}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      const currentWeekData = await currentWeekResponse.json();
+
+      // Fetch previous week data
+      const previousWeekResponse = await fetch(
+        `${API_URL}/api/dashboard/summary?period=week&type=expense&startDate=${previousWeekStart.toISOString()}&endDate=${previousWeekEnd.toISOString()}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      const previousWeekData = await previousWeekResponse.json();
+
+      const currentTotal = currentWeekData.summary?.totalExpenses || 0;
+      const previousTotal = previousWeekData.summary?.totalExpenses || 0;
+      const difference = currentTotal - previousTotal;
+      const percentageChange = previousTotal > 0 
+        ? ((difference / previousTotal) * 100) 
+        : 0;
+
+      setWeeklyData({
+        currentWeek: currentTotal,
+        previousWeek: previousTotal,
+        difference,
+        percentageChange,
+      });
+    } catch (error) {
+      console.error('Error fetching weekly comparison:', error);
+    }
+  };
+
   useEffect(() => {
     if (token) {
       fetchCategoryBreakdown();
+      fetchWeeklyComparison();
     }
   }, [token]);
 
   const onRefresh = () => {
     setRefreshing(true);
     fetchCategoryBreakdown();
-  };
-
-  const TopCategoryInsight = () => {
-    if (chartData.length === 0) return null;
-    
-    return (
-      <View style={insightCardStyle}>
-        <Text style={insightLabelStyle}>🏆 Top Category</Text>
-        <Text style={insightValueStyle}>
-          {chartData[0]?.text || 'N/A'}
-        </Text>
-        <Text style={insightAmountStyle}>
-          ${chartData[0]?.value.toFixed(2) || '0.00'}
-        </Text>
-        <Text style={insightPercentageStyle}>
-          {totalExpenses > 0
-            ? `${((chartData[0]?.value / totalExpenses) * 100).toFixed(1)}% of total spending`
-            : '0%'}
-        </Text>
-      </View>
-    );
+    fetchWeeklyComparison();
   };
 
 
   const TotalSpendingInsight = () => {
     return (
-      <View style={insightCardStyle}>
-        <Text style={insightLabelStyle}>💰 Total Spending</Text>
-        <Text style={insightValueStyle}>
-          ${totalExpenses.toFixed(2)}
+      <TouchableOpacity 
+        style={analyticsStyles.insightCard} 
+        onPress={() => setTotalSpendingExpanded(!totalSpendingExpanded)}
+        activeOpacity={0.7}
+      >
+        <View style={analyticsStyles.accordionHeader}>
+          <View style={{ flex: 1 }}>
+            <Text style={analyticsStyles.insightLabel}>Total Spending</Text>
+            <Text style={analyticsStyles.insightValue}>
+              ${totalExpenses.toFixed(2)}
+            </Text>
+            <Text style={analyticsStyles.insightPercentage}>
+              This month
+            </Text>
+          </View>
+          <Ionicons 
+            name={totalSpendingExpanded ? "chevron-up" : "chevron-down"} 
+            size={24} 
+            color={colours.textSecondary} 
+          />
+        </View>
+        
+        {totalSpendingExpanded && (
+          <View style={analyticsStyles.accordionContent}>
+            <View style={analyticsStyles.accordionItem}>
+              <Text style={analyticsStyles.accordionItemLabel}>Average per day</Text>
+              <Text style={analyticsStyles.accordionItemValue}>
+                ${(totalExpenses / 30).toFixed(2)}
+              </Text>
+            </View>
+            <View style={analyticsStyles.accordionItem}>
+              <Text style={analyticsStyles.accordionItemLabel}>Avg per week</Text>
+              <Text style={analyticsStyles.accordionItemValue}>
+                ${(totalExpenses / 4).toFixed(2)}
+              </Text>
+            </View>
+            {chartData.length > 0 && (
+              <View style={analyticsStyles.accordionItem}>
+                <Text style={analyticsStyles.accordionItemLabel}>Top category</Text>
+                <Text style={analyticsStyles.accordionItemValue}>
+                  {chartData[0]?.text} (${chartData[0]?.value.toFixed(2)})
+                </Text>
+              </View>
+            )}
+          </View>
+        )}
+      </TouchableOpacity>
+    );
+  };
+
+  const WeeklyComparisonInsight = () => {
+    if (!weeklyData) return null;
+
+    const { currentWeek, previousWeek, difference, percentageChange } = weeklyData;
+    const isIncrease = difference > 0;
+    const isDecrease = difference < 0;
+
+    let message = 'Same as last week';
+    let trendColor = colours.textSecondary;
+
+    if (isDecrease) {
+      message = `You spent $${Math.abs(difference).toFixed(2)} less this week`;
+      trendColor = colours.success;
+    } else if (isIncrease) {
+      message = `You spent $${difference.toFixed(2)} more this week`;
+      trendColor = colours.error;
+    }
+
+    return (
+      <View style={analyticsStyles.insightCard}>
+        <Text style={analyticsStyles.insightLabel}>Weekly Comparison</Text>
+        <Text style={analyticsStyles.insightValue}>
+          ${currentWeek.toFixed(2)}
         </Text>
-        <Text style={insightPercentageStyle}>
-          This month
+        <Text style={analyticsStyles.insightAmount}>
+          This week
         </Text>
+        <View style={analyticsStyles.weeklyComparisonDetails}>
+          <Text style={[analyticsStyles.weeklyComparisonText, { color: trendColor }]}>
+            {message}
+          </Text>
+          {previousWeek > 0 && difference !== 0 && (
+            <Text style={analyticsStyles.weeklyComparisonSubtext}>
+              {isDecrease ? '↓' : '↑'} {Math.abs(percentageChange).toFixed(1)}% vs last week (${previousWeek.toFixed(2)})
+            </Text>
+          )}
+        </View>
       </View>
     );
   };
@@ -124,17 +252,17 @@ export default function Analytics() {
         <RefreshControl
           refreshing={refreshing}
           onRefresh={onRefresh}
-          tintColor={COLOURS.primary}
+          tintColor={colours.primary}
         />
       }
     >
       <View style={styles.headerContainer}>
         <Text style={styles.header}>Analytics</Text>
-        <View style={chartToggleContainerStyle}>
+        <View style={analyticsStyles.chartToggleContainer}>
           <TouchableOpacity
             style={[
-              chartToggleButtonStyle,
-              chartType === 'pie' && chartToggleButtonActiveStyle
+              analyticsStyles.chartToggleButton,
+              chartType === 'pie' && analyticsStyles.chartToggleButtonActive
             ]}
             onPress={() => setChartType('pie')}
             activeOpacity={0.7}
@@ -142,13 +270,13 @@ export default function Analytics() {
             <Ionicons 
               name="pie-chart" 
               size={20} 
-              color={chartType === 'pie' ? COLOURS.background : COLOURS.textSecondary} 
+              color={chartType === 'pie' ? colours.background : colours.textSecondary} 
             />
           </TouchableOpacity>
           <TouchableOpacity
             style={[
-              chartToggleButtonStyle,
-              chartType === 'bar' && chartToggleButtonActiveStyle
+              analyticsStyles.chartToggleButton,
+              chartType === 'bar' && analyticsStyles.chartToggleButtonActive
             ]}
             onPress={() => setChartType('bar')}
             activeOpacity={0.7}
@@ -156,22 +284,22 @@ export default function Analytics() {
             <Ionicons 
               name="bar-chart" 
               size={20} 
-              color={chartType === 'bar' ? COLOURS.background : COLOURS.textSecondary} 
+              color={chartType === 'bar' ? colours.background : colours.textSecondary} 
             />
           </TouchableOpacity>
         </View>
       </View>
 
       {loading ? (
-        <View style={loadingContainerStyle}>
-          <ActivityIndicator size="large" color={COLOURS.primary} />
-          <Text style={loadingTextStyle}>Loading analytics...</Text>
+        <View style={analyticsStyles.loadingContainer}>
+          <ActivityIndicator size="large" color={colours.primary} />
+          <Text style={analyticsStyles.loadingText}>Loading analytics...</Text>
         </View>
       ) : chartData.length === 0 ? (
-        <View style={emptyContainerStyle}>
-          <Ionicons name="pie-chart-outline" size={64} color={COLOURS.textDisabled} />
-          <Text style={emptyTextStyle}>No expense data available</Text>
-          <Text style={emptySubtextStyle}>
+        <View style={analyticsStyles.emptyContainer}>
+          <Ionicons name="pie-chart-outline" size={64} color={colours.textDisabled} />
+          <Text style={analyticsStyles.emptyText}>No expense data available</Text>
+          <Text style={analyticsStyles.emptySubtext}>
             Start adding expenses to see your spending breakdown
           </Text>
         </View>
@@ -179,114 +307,14 @@ export default function Analytics() {
         <>
           <SpendingChart data={chartData} totalExpenses={totalExpenses} chartType={chartType} />
           
-          <View style={insightsContainerStyle}>
-            <Text style={insightsTitleStyle}>💡 Insights</Text>
+          <View style={analyticsStyles.insightsContainer}>
+            <Text style={analyticsStyles.insightsTitle}>💡 Insights</Text>
             
             <TotalSpendingInsight />
-            <TopCategoryInsight />
+            <WeeklyComparisonInsight />
           </View>
         </>
       )}
     </ScrollView>
   );
 }
-
-// Styles
-const loadingContainerStyle = {
-  paddingVertical: 60,
-  alignItems: 'center' as const,
-};
-
-const loadingTextStyle = {
-  marginTop: 16,
-  fontSize: 16,
-  color: COLOURS.textSecondary,
-};
-
-const emptyContainerStyle = {
-  paddingVertical: 60,
-  alignItems: 'center' as const,
-};
-
-const emptyTextStyle = {
-  marginTop: 16,
-  fontSize: 18,
-  fontWeight: '600' as const,
-  color: COLOURS.textPrimary,
-};
-
-const emptySubtextStyle = {
-  marginTop: 8,
-  fontSize: 14,
-  color: COLOURS.textSecondary,
-  textAlign: 'center' as const,
-  paddingHorizontal: 40,
-};
-
-const insightsContainerStyle = {
-  marginTop: 24,
-  paddingTop: 20,
-  borderTopWidth: 1,
-  borderTopColor: COLOURS.border,
-  paddingBottom: 20,
-};
-
-const insightsTitleStyle = {
-  fontSize: 18,
-  fontWeight: '600' as const,
-  color: COLOURS.textPrimary,
-  marginBottom: 12,
-};
-
-const insightCardStyle = {
-  backgroundColor: COLOURS.card,
-  borderRadius: 12,
-  padding: 16,
-  marginBottom: 12,
-  borderWidth: 1,
-  borderColor: COLOURS.border,
-};
-
-const insightLabelStyle = {
-  fontSize: 13,
-  color: COLOURS.textSecondary,
-  marginBottom: 6,
-};
-
-const insightValueStyle = {
-  fontSize: 24,
-  fontWeight: 'bold' as const,
-  color: COLOURS.textPrimary,
-  marginBottom: 4,
-};
-
-const insightAmountStyle = {
-  fontSize: 20,
-  fontWeight: '600' as const,
-  color: COLOURS.primary,
-  marginBottom: 4,
-};
-
-const insightPercentageStyle = {
-  fontSize: 14,
-  color: COLOURS.textSecondary,
-};
-
-const chartToggleContainerStyle = {
-  flexDirection: 'row' as const,
-  backgroundColor: COLOURS.card,
-  borderRadius: 8,
-  padding: 4,
-  borderWidth: 1,
-  borderColor: COLOURS.border,
-};
-
-const chartToggleButtonStyle = {
-  paddingVertical: 6,
-  paddingHorizontal: 12,
-  borderRadius: 6,
-};
-
-const chartToggleButtonActiveStyle = {
-  backgroundColor: COLOURS.primary,
-};

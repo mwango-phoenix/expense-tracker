@@ -100,6 +100,36 @@ const getSummary = async (req, res) => {
         };
         summary.net = summary.totalIncome - summary.totalExpenses;
 
+        // Add category breakdown for expenses
+        if (type === 'expense' || type === 'both') {
+            const Expense = mongoose.model('Expense');
+            const categoryBreakdown = await Expense.aggregate([
+                { $match: filteredDocs },
+                {
+                    $group: {
+                        _id: "$category",
+                        total: { $sum: "$amount" },
+                        count: { $sum: 1 }
+                    }
+                },
+                { $sort: { total: -1 } },
+                {
+                    $project: {
+                        _id: 0,
+                        category: "$_id",
+                        total: { $round: ["$total", 2] },
+                        count: "$count"
+                    }
+                }
+            ]);
+
+            // Convert to object format
+            summary.categoryBreakdown = {};
+            categoryBreakdown.forEach(item => {
+                summary.categoryBreakdown[item.category] = item.total;
+            });
+        }
+
         res.status(200).json({
             period,
             summary,
