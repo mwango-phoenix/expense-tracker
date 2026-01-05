@@ -39,6 +39,7 @@ export default function TransactionModal({
   onDelete,
 }: TransactionModalProps) {
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [amountText, setAmountText] = useState("");
   const [formData, setFormData] = useState<Omit<Transaction, "_id" | "type">>({
     amount: 0,
     category: categories[0]?.name || "",
@@ -50,6 +51,7 @@ export default function TransactionModal({
 
   useEffect(() => {
     if (editingTransaction) {
+      setAmountText(editingTransaction.amount.toString());
       setFormData({
         amount: editingTransaction.amount,
         category: editingTransaction.category,
@@ -59,6 +61,7 @@ export default function TransactionModal({
         date: editingTransaction.date,
       });
     } else {
+      setAmountText("");
       setFormData({
         amount: 0,
         category: categories[0]?.name || "",
@@ -71,11 +74,12 @@ export default function TransactionModal({
   }, [editingTransaction, visible, categories]);
 
   const handleSubmit = () => {
-    if (!formData.amount || formData.amount <= 0) {
+    const amount = parseFloat(amountText);
+    if (!amount || amount <= 0 || isNaN(amount)) {
       Alert.alert("Error", "Please enter a valid amount");
       return;
     }
-    onSubmit(formData);
+    onSubmit({ ...formData, amount });
   };
 
   const handleDelete = () => {
@@ -181,7 +185,6 @@ export default function TransactionModal({
                 setFormData((prev) => ({ ...prev, title: text }))
               }
             />
-
             <Text style={[styles.textSecondary]}>
               Amount
             </Text>
@@ -190,13 +193,8 @@ export default function TransactionModal({
               placeholder="0.00"
               placeholderTextColor={colours.textDisabled}
               keyboardType="decimal-pad"
-              value={formData.amount ? formData.amount.toString() : ""}
-              onChangeText={(text) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  amount: parseFloat(text) || 0,
-                }))
-              }
+              value={amountText}
+              onChangeText={setAmountText}
             />
 
             <Text style={[styles.textSecondary]}>
