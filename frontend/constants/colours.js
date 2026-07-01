@@ -22,6 +22,10 @@ const COLOURS = {
 	warning: '#FBBF24',    // Amber for cautions
 	info: '#38BDF8',       // Blue for info messages
 
+	// Specific Use Cases
+	income: '#8FE3C9',  // Desaturated mint, calmer than `success`
+	expense: '#E29387', // Dusty coral, calmer than `error`
+
 	// Borders & Dividers
 	border: '#2D313A',     // Subtle, unobtrusive
 	divider: '#23262F',

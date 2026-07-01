@@ -27,7 +27,7 @@ export default function TransactionCard({
     });
   };
 
-  const color = type === "income" ? colours.success : colours.error;
+  const color = type === "income" ? colours.income : colours.expense;
 
   return (
     <TouchableOpacity
