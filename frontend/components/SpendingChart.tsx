@@ -18,9 +18,10 @@ interface SpendingChartProps {
   data: CategoryBreakdownItem[];
   totalExpenses: number;
   chartType?: 'pie' | 'bar';
+  title?: string;
 }
 
-export default function SpendingChart({ data, totalExpenses, chartType = 'pie' }: SpendingChartProps) {
+export default function SpendingChart({ data, totalExpenses, chartType = 'pie', title = 'Monthly Spending' }: SpendingChartProps) {
   const [selectedBar, setSelectedBar] = useState<number | null>(null);
 
   const formatCurrency = (amount: number) => {
@@ -146,7 +147,7 @@ export default function SpendingChart({ data, totalExpenses, chartType = 'pie' }
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Monthly Spending</Text>
+      <Text style={styles.header}>{title}</Text>
       
       {chartType === 'pie' ? renderPieChart() : renderBarChart()}
     </View>

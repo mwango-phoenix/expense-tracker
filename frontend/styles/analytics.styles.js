@@ -86,6 +86,28 @@ const styles = StyleSheet.create({
   chartToggleButtonActive: {
     backgroundColor: colours.primary,
   },
+  periodSelectorContainer: {
+    flexDirection: 'row',
+    backgroundColor: colours.card,
+    borderRadius: 8,
+    padding: 4,
+    borderWidth: 1,
+    borderColor: colours.border,
+    marginBottom: 16,
+  },
+  periodSelectorButton: {
+    flex: 1,
+    paddingVertical: 8,
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  periodSelectorButtonActive: {
+    backgroundColor: colours.primary,
+  },
+  periodSelectorText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
   weeklyComparisonDetails: {
     marginTop: 8,
     paddingTop: 8,

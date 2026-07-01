@@ -11,9 +11,19 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import colours from '@/constants/colours';
 import SpendingChart, { CategoryBreakdownItem } from '@/components/SpendingChart';
+import PeriodSelector from '@/components/PeriodSelector';
 import { useAuthStore } from '@/store/authStore';
 import styles from '@/styles/home.styles';
 import analyticsStyles from '@/styles/analytics.styles';
+import {
+  TimePeriod,
+  getPeriodRange,
+  getPeriodLabel,
+  getChartTitle,
+  formatDateRange,
+  getDayCount,
+  getWeekCount,
+} from '@/utils/dateRange';
 
 export default function Analytics() {
   const { token } = useAuthStore() as { token: string | null };
@@ -23,6 +33,7 @@ export default function Analytics() {
   const [chartData, setChartData] = useState<CategoryBreakdownItem[]>([]);
   const [totalExpenses, setTotalExpenses] = useState(0);
   const [chartType, setChartType] = useState<'pie' | 'bar'>('pie');
+  const [selectedPeriod, setSelectedPeriod] = useState<TimePeriod>('month');
   const [weeklyData, setWeeklyData] = useState<{
     currentWeek: number;
     previousWeek: number;
@@ -62,7 +73,7 @@ export default function Analytics() {
 
   const fetchCategoryBreakdown = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/dashboard/summary?period=month`, {
+      const response = await fetch(`${API_URL}/api/dashboard/summary?period=${selectedPeriod}&type=expense`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -159,7 +170,7 @@ export default function Analytics() {
       fetchCategoryBreakdown();
       fetchWeeklyComparison();
     }
-  }, [token]);
+  }, [token, selectedPeriod]);
 
   const onRefresh = () => {
     setRefreshing(true);
@@ -169,6 +180,9 @@ export default function Analytics() {
 
 
   const TotalSpendingInsight = () => {
+    const { start, end } = getPeriodRange(selectedPeriod);
+    const dayCount = getDayCount(start, end);
+    const weekCount = getWeekCount(start, end);
     return (
       <TouchableOpacity 
         style={analyticsStyles.insightCard} 
@@ -182,7 +196,7 @@ export default function Analytics() {
               ${totalExpenses.toFixed(2)}
             </Text>
             <Text style={analyticsStyles.insightPercentage}>
-              This month
+              {getPeriodLabel(selectedPeriod)} ({formatDateRange(start, end)})
             </Text>
           </View>
           <Ionicons 
@@ -197,13 +211,13 @@ export default function Analytics() {
             <View style={analyticsStyles.accordionItem}>
               <Text style={analyticsStyles.accordionItemLabel}>Average per day</Text>
               <Text style={analyticsStyles.accordionItemValue}>
-                ${(totalExpenses / 30).toFixed(2)}
+                ${(totalExpenses / dayCount).toFixed(2)}
               </Text>
             </View>
             <View style={analyticsStyles.accordionItem}>
               <Text style={analyticsStyles.accordionItemLabel}>Avg per week</Text>
               <Text style={analyticsStyles.accordionItemValue}>
-                ${(totalExpenses / 4).toFixed(2)}
+                ${(totalExpenses / weekCount).toFixed(2)}
               </Text>
             </View>
             {chartData.length > 0 && (
@@ -245,7 +259,7 @@ export default function Analytics() {
           ${currentWeek.toFixed(2)}
         </Text>
         <Text style={analyticsStyles.insightAmount}>
-          This week
+          This week vs last week
         </Text>
         <View style={analyticsStyles.weeklyComparisonDetails}>
           <Text style={[analyticsStyles.weeklyComparisonText, { color: trendColor }]}>
@@ -306,6 +320,8 @@ export default function Analytics() {
         </View>
       </View>
 
+      <PeriodSelector value={selectedPeriod} onChange={setSelectedPeriod} />
+
       {loading ? (
         <View style={analyticsStyles.loadingContainer}>
           <ActivityIndicator size="large" color={colours.primary} />
@@ -314,18 +330,19 @@ export default function Analytics() {
       ) : chartData.length === 0 ? (
         <View style={analyticsStyles.emptyContainer}>
           <Ionicons name="pie-chart-outline" size={64} color={colours.textDisabled} />
-          <Text style={analyticsStyles.emptyText}>No expense data available</Text>
+          <Text style={analyticsStyles.emptyText}>
+            No expenses {getPeriodLabel(selectedPeriod).toLowerCase()}
+          </Text>
           <Text style={analyticsStyles.emptySubtext}>
             Start adding expenses to see your spending breakdown
           </Text>
         </View>
       ) : (
         <>
-          <SpendingChart data={chartData} totalExpenses={totalExpenses} chartType={chartType} />
+          <SpendingChart data={chartData} totalExpenses={totalExpenses} chartType={chartType} title={getChartTitle(selectedPeriod)} />
           
           <View style={analyticsStyles.insightsContainer}>
-            <Text style={analyticsStyles.insightsTitle}>💡 Insights</Text>
-            
+            <Text style={analyticsStyles.insightsTitle}>Insights</Text>
             <TotalSpendingInsight />
             <WeeklyComparisonInsight />
           </View>

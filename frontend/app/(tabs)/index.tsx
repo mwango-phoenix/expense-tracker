@@ -16,6 +16,8 @@ import { SkeletonCard, SkeletonSummaryCard } from "@/components/Skeleton";
 import { Transaction, DashboardSummary } from "@/types";
 import TransactionCard from "@/components/TransactionCard";
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import { getPeriodRange, getPeriodLabel, formatDateRange } from "@/utils/dateRange";
 
 export default function Index() {
   const { token, isCheckingAuth, refreshDashboard, logout } = useAuthStore() as { 
@@ -25,6 +27,8 @@ export default function Index() {
     logout: () => Promise<void>;
   };
   const insets = useSafeAreaInsets();
+  const router = useRouter();
+  const monthRange = getPeriodRange('month');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [page, setPage] = useState(1);
@@ -192,14 +196,26 @@ export default function Index() {
       {loading ? (
         <SkeletonSummaryCard />
       ) : (
-      <View style={styles.balanceCard}>
+      <TouchableOpacity
+        style={styles.balanceCard}
+        onPress={() => router.push('/analytics')}
+        activeOpacity={0.7}
+      >
         <View style={{ marginBottom: 16 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
             <Text style={{ color: colours.textSecondary, fontSize: 14, marginBottom: 4 }}>
               Net Balance
             </Text>
-            <Ionicons name="pie-chart-outline" size={20} color={colours.primary} />
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Text style={{ color: colours.textSecondary, fontSize: 12, marginRight: 4 }}>
+                View analytics
+              </Text>
+              <Ionicons name="chevron-forward" size={16} color={colours.primary} />
+            </View>
           </View>
+          <Text style={{ color: colours.textSecondary, fontSize: 12, marginBottom: 4 }}>
+            {getPeriodLabel('month')} ({formatDateRange(monthRange.start, monthRange.end)})
+          </Text>
           <Text
             style={{
               fontSize: 32,
@@ -228,10 +244,10 @@ export default function Index() {
 
         <View style={{ marginTop: 10, paddingTop: 12, borderTopWidth: 1, borderTopColor: colours.border }}>
           <Text style={{ color: colours.textSecondary, fontSize: 12 }}>
-            {summary.transactionCount.income + summary.transactionCount.expenses} transactions this period
+            {summary.transactionCount.income + summary.transactionCount.expenses} transactions this month
           </Text>
         </View>
-      </View>
+      </TouchableOpacity>
       )}
 
       {/* Transactions List */}
