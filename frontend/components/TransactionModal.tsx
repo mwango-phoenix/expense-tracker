@@ -98,7 +98,7 @@ export default function TransactionModal({
     }));
   };
 
-  const typeColor = type === "income" ? colours.success : colours.error;
+  const typeColor = type === "income" ? colours.income : colours.expense;
   const title = editingTransaction
     ? `Edit ${type.charAt(0).toUpperCase() + type.slice(1)}`
     : `Add ${type.charAt(0).toUpperCase() + type.slice(1)}`;

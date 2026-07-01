@@ -1,5 +1,5 @@
 // components/SpendingChart.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { PieChart, BarChart } from 'react-native-gifted-charts';
 import { Ionicons } from '@expo/vector-icons';
@@ -23,6 +23,12 @@ interface SpendingChartProps {
 
 export default function SpendingChart({ data, totalExpenses, chartType = 'pie', title = 'Monthly Spending' }: SpendingChartProps) {
   const [selectedBar, setSelectedBar] = useState<number | null>(null);
+
+  useEffect(() => {
+    setSelectedBar(null);
+  }, [data, totalExpenses, chartType, title]);
+
+  const chartKey = `${title}-${totalExpenses}-${data.map((d) => `${d.text}:${d.value}`).join(',')}`;
 
   const formatCurrency = (amount: number) => {
     return `$${amount.toFixed(2)}`;
@@ -62,6 +68,7 @@ export default function SpendingChart({ data, totalExpenses, chartType = 'pie', 
     return (
       <View style={styles.barChartContainer}>
         <BarChart
+          key={chartKey}
           data={barData}
           barWidth={32}
           spacing={20}
@@ -118,6 +125,7 @@ export default function SpendingChart({ data, totalExpenses, chartType = 'pie', 
         {/* The Donut Chart */}
         <View style={styles.chartWrapper}>
           <PieChart
+            key={chartKey}
             data={data}
             donut
             showText={false}

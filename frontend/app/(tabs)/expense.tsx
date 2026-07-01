@@ -154,7 +154,7 @@ export default function ExpensePage() {
           <Text style={styles.title}>Expenses</Text>
           <Text style={[styles.textSecondary, { fontSize: 16, marginTop: 4 }]}>
             Total:{" "}
-            <Text style={{ color: colours.error, fontWeight: "bold" }}>
+            <Text style={{ color: colours.expense, fontWeight: "bold" }}>
               {formatCurrency(totalExpense)}
             </Text>
           </Text>
