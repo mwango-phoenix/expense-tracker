@@ -1,50 +1,138 @@
-# Welcome to your Expo app 👋
+# Expense Tracker — Frontend
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+## Prerequisites
 
-## Get started
+- **Node.js** 18+ and npm
+- **Expo Go** on a physical device, or an Android/iOS emulator
+- **Backend running** — the app will not work without it (see [Backend setup](#backend-setup))
 
-1. Install dependencies
+## Quick start
 
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+From this directory:
 
 ```bash
-npm run reset-project
+npm install
+npm start
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Then press `a` (Android emulator), `i` (iOS simulator), or scan the QR code with Expo Go.
 
-## Learn more
+| Script | Command | Purpose |
+|--------|---------|---------|
+| Dev server | `npm start` | Start Expo dev server |
+| Android | `npm run android` | Open on Android emulator |
+| iOS | `npm run ios` | Open on iOS simulator |
+| Web | `npm run web` | Run in browser (limited RN support) |
+| Lint | `npm run lint` | Run ESLint |
 
-To learn more about developing your project with Expo, look at the following resources:
+## Backend setup
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+1. In `../backend`, create a `.env` with at least:
 
-## Join the community
+   ```
+   PORT=3001
+   MONGODB_URI=<your-mongodb-connection-string>
+   JWT_SECRET=<a-secret-string>
+   ```
 
-Join our community of developers creating universal apps.
+2. Install and start the backend:
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+   ```bash
+   cd ../backend
+   npm install
+   npm run dev
+   ```
+
+## What the app does
+
+- **Sign up / log in** — JWT stored in AsyncStorage via Zustand
+- **Home (Dashboard)** — monthly net balance, income/expense totals, paginated recent transactions
+- **Income / Expense tabs** — list, create, edit, and delete entries via modal forms
+- **Categories** — predefined icons and labels in
+
+Authenticated API calls send `Authorization: Bearer <token>`.
+
+## Project structure
+
+```
+frontend/
+├── app/                    # Routes (Expo Router, file-based)
+│   ├── _layout.tsx         # Root layout: auth guard + navigation
+│   ├── (auth)/             # Unauthenticated screens
+│   │   ├── index.tsx       # Login
+│   │   └── signup.tsx      # Registration
+│   └── (tabs)/             # Main app (tab navigator)
+│       ├── _layout.tsx     # Tab bar (Home, Income, Expense)
+│       ├── index.tsx       # Dashboard
+│       ├── income.tsx      # Income CRUD
+│       └── expense.tsx     # Expense CRUD
+├── components/             # Shared UI
+│   ├── DatePicker.tsx
+│   ├── LogoutButton.tsx
+│   ├── SafeScreen.tsx
+│   ├── Skeleton.tsx
+│   ├── SpendingChart.tsx   # Pie chart (gifted-charts)
+│   ├── TransactionCard.tsx
+│   └── TransactionModal.tsx
+├── constants/
+│   └── colours.js          # Theme palette (dark UI)
+├── store/
+│   └── authStore.tsx       # Zustand: login, register, logout, session
+├── styles/                 # StyleSheet objects per screen/feature
+├── types/
+│   └── index.ts            # Transaction types + category constants
+├── app.json                # Expo config
+└── tsconfig.json           # TypeScript; `@/*` path alias → project root
+```
+
+## Architecture
+### Styling conventions
+
+- **Colours** — import the default export from `constants/colours.js` (file is spelled `colours`, not `colors`).
+- **Layout styles** — co-located in `styles/*.styles.js` and imported per screen.
+- **Safe areas** — `useSafeAreaInsets()` from `react-native-safe-area-context` on tab screens; `SafeScreen` wrapper available for full-screen layouts.
+
+### Types and categories
+
+[`types/index.ts`](types/index.ts) defines `Transaction`, `Income`, `Expense`, `DashboardSummary`, and exports `INCOME_CATEGORIES` / `EXPENSE_CATEGORIES` used by `TransactionModal`.
+
+### Path alias
+
+Import with `@/` instead of relative paths:
+
+
+## API endpoints used
+
+All routes are prefixed with `/api` on the backend.
+
+| Area | Methods | Path |
+|------|---------|------|
+| Auth | POST | `/auth/register`, `/auth/login` |
+| Income | GET, POST | `/income` |
+| Income | PUT, DELETE | `/income/:id` |
+| Expense | GET, POST | `/expense` |
+| Expense | PUT, DELETE | `/expense/:id` |
+| Dashboard | GET | `/dashboard/summary?period=month` |
+
+
+## Common tasks
+
+### Add a new tab screen
+
+1. Add `app/(tabs)/your-screen.tsx`.
+2. Register it in `app/(tabs)/_layout.tsx` with a `Tabs.Screen` entry.
+
+### Add a transaction category
+
+Edit `INCOME_CATEGORIES` or `EXPENSE_CATEGORIES` in `types/index.ts`. Icons use [Font Awesome 5](https://icons.expo.fyi/) names passed to `FontAwesome5`.
+
+### Refresh the dashboard from another tab
+
+After creating/updating/deleting income or expense, call `triggerDashboardRefresh()` from `useAuthStore`. The home screen watches `refreshDashboard` and reloads.
+
+### Run on a physical device
+
+1. Phone and computer must be on the same Wi‑Fi.
+2. Set `EXPO_PUBLIC_API_URL` to your machine's LAN IP (not `localhost` or `10.0.2.2`).
+3. Ensure the backend listens on `0.0.0.0` or that your firewall allows port 3001.
+

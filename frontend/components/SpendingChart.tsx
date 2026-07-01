@@ -1,6 +1,6 @@
 // components/SpendingChart.tsx
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { PieChart, BarChart } from 'react-native-gifted-charts';
 import { Ionicons } from '@expo/vector-icons';
 import COLOURS from "../constants/colours";
