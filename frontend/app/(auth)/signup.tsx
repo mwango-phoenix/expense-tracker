@@ -21,9 +21,9 @@ export default function SignUp() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
 
-  const { user, loading, register } = useAuthStore() as {
+  const { user, isLoading, register } = useAuthStore() as {
     user: string;
-    loading: boolean;
+    isLoading: boolean;
     register: (username: string, email: string, password: string) => Promise<any>;
   };
 
@@ -32,7 +32,12 @@ export default function SignUp() {
   const handleSignUp = async () => {
     const result = await register(username, email, password);
 
-    if (!result.success) Alert.alert("Error", result.error);
+    if (!result.success) {
+      Alert.alert("Error", result.error);
+      return;
+    }
+
+    router.replace("/(tabs)");
   };
 
   return (
@@ -93,9 +98,9 @@ export default function SignUp() {
         <TouchableOpacity
           style={styles.button}
           onPress={handleSignUp}
-          disabled={loading}
+          disabled={isLoading}
         >
-          {loading ? (
+          {isLoading ? (
             <ActivityIndicator color={styles.buttonText?.color || "#181A20"} />
           ) : (
             <Text style={styles.buttonText}>Sign Up</Text>

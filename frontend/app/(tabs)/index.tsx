@@ -37,7 +37,7 @@ export default function Index() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [hasMore, setHasMore] = useState(true);
 
-  const API_URL = process.env.API_URL || "http://10.0.2.2:3001";
+  const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://10.0.2.2:3001";
 
   const fetchDashboardSummary = async () => {
     try {

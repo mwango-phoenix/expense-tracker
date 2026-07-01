@@ -6,9 +6,11 @@ import {
   TextInput,
   Modal,
   Alert,
+  Pressable,
 } from "react-native";
 import React, { useState, useEffect } from "react";
 import { FontAwesome5 } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import styles from "@/styles/create.styles";
 import colours from "@/constants/colours";
 import DatePicker from "@/components/DatePicker";
@@ -102,10 +104,11 @@ export default function TransactionModal({
     : `Add ${type.charAt(0).toUpperCase() + type.slice(1)}`;
 
   return (
-    <Modal visible={visible} transparent animationType="slide">
-      <View style={styles.overlay}>
-        <View
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+      <Pressable style={styles.overlay} onPress={onClose}>
+        <Pressable
           style={styles.modalCard}
+          onPress={(event) => event.stopPropagation()}
         >
           <View
             style={{
@@ -116,11 +119,16 @@ export default function TransactionModal({
             }}
           >
             <Text style={styles.title}>{title}</Text>
-            {editingTransaction && (
-              <TouchableOpacity onPress={handleDelete}>
-                <FontAwesome5 name="trash" size={20} color={colours.error} />
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              {editingTransaction && (
+                <TouchableOpacity onPress={handleDelete} style={{ marginRight: 16 }}>
+                  <FontAwesome5 name="trash" size={20} color={colours.error} />
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity onPress={onClose}>
+                <Ionicons name="close" size={24} color={colours.textSecondary} />
               </TouchableOpacity>
-            )}
+            </View>
           </View>
 
           <ScrollView>
@@ -271,8 +279,8 @@ export default function TransactionModal({
               </TouchableOpacity>
             </View>
           </ScrollView>
-        </View>
-      </View>
+        </Pressable>
+        </Pressable>
     </Modal>
   );
 }

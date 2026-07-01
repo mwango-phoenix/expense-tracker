@@ -11,7 +11,7 @@ import { useState } from "react";
 import styles from "../../styles/auth.styles";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import COLOURS from "../../constants/colours";
-import { Link } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import { useAuthStore } from "@/store/authStore";
 
 export default function Login() {
@@ -19,10 +19,16 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const { isLoading, login } = useAuthStore() as { isLoading: boolean, login: (email: string, password: string) => Promise<any> }
+  const router = useRouter();
 
   const handleLogin = async () => {
     const result = await login(email, password);
-    if (!result.success) Alert.alert("Error", result.error)
+    if (!result.success) {
+      Alert.alert("Error", result.error);
+      return;
+    }
+
+    router.replace("/(tabs)");
   };
 
   return (
