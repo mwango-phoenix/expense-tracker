@@ -33,15 +33,31 @@ export default function Analytics() {
 
   const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://10.0.2.2:3001";
 
-  const categoryColors: { [key: string]: string } = {
-    Food: colours.primary,
-    Transport: colours.secondary,
-    Entertainment: colours.warning,
-    Shopping: '#A78BFA',
-    Bills: '#FB923C',
-    Healthcare: '#F472B6',
-    Education: '#34D399',
-    Other: colours.info,
+  // A palette of visually distinct colours. Any category is deterministically
+  // mapped to one of these (via getCategoryColor below), so new/custom
+  // categories always get their own colour instead of falling back to a
+  // shared default.
+  const categoryColorPalette: string[] = [
+    colours.primary,
+    colours.secondary,
+    colours.warning,
+    '#A78BFA', // violet
+    '#FB923C', // orange
+    '#F472B6', // pink
+    '#34D399', // emerald
+    colours.info,
+    '#F87171', // red
+    '#FACC15', // yellow
+    '#818CF8', // indigo
+    '#2DD4BF', // teal
+  ];
+
+  const getCategoryColor = (category: string) => {
+    let hash = 0;
+    for (let i = 0; i < category.length; i++) {
+      hash = (hash * 31 + category.charCodeAt(i)) >>> 0;
+    }
+    return categoryColorPalette[hash % categoryColorPalette.length];
   };
 
   const fetchCategoryBreakdown = async () => {
@@ -60,7 +76,7 @@ export default function Analytics() {
         const formattedData: CategoryBreakdownItem[] = Object.entries(breakdown).map(
           ([category, value]) => ({
             value: value as number,
-            color: categoryColors[category] || colours.textDisabled,
+            color: getCategoryColor(category),
             text: category,
           })
         );
