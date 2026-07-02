@@ -8,65 +8,24 @@ const getSummary = async (req, res) => {
     const user = req.user._id;
     const { period = 'month', type = 'both', startDate, endDate } = req.query;
 
-    // Define date format based on period
+    // Controls how the time-series breakdown in data.results is bucketed.
+    // week uses daily buckets so individual days within the week are visible.
     const dateFormats = {
-        day: "%Y-%m-%d",
-        month: "%Y-%m",
-        year: "%Y"
+        day:   '%Y-%m-%d',
+        week:  '%Y-%m-%d',
+        month: '%Y-%m',
+        year:  '%Y',
     };
-
-    const format = dateFormats[period] || dateFormats.month;
-
-    // Derive a default date range from `period` when explicit start/end
-    // dates aren't provided, so e.g. `period=month` actually scopes results
-    // to the current calendar month instead of matching all-time data.
-    const getDefaultRange = (p) => {
-        const now = new Date();
-        const start = new Date(now);
-        const end = new Date(now);
-
-        switch (p) {
-            case 'day':
-                start.setHours(0, 0, 0, 0);
-                end.setHours(23, 59, 59, 999);
-                break;
-            case 'week': {
-                const dayOfWeek = start.getDay(); // 0 = Sunday
-                start.setDate(start.getDate() - dayOfWeek);
-                start.setHours(0, 0, 0, 0);
-                end.setDate(start.getDate() + 6);
-                end.setHours(23, 59, 59, 999);
-                break;
-            }
-            case 'year':
-                start.setMonth(0, 1);
-                start.setHours(0, 0, 0, 0);
-                end.setMonth(11, 31);
-                end.setHours(23, 59, 59, 999);
-                break;
-            case 'month':
-            default:
-                start.setDate(1);
-                start.setHours(0, 0, 0, 0);
-                end.setMonth(end.getMonth() + 1, 0);
-                end.setHours(23, 59, 59, 999);
-                break;
-        }
-
-        return { start, end };
-    };
+    const format = dateFormats[period] ?? dateFormats.month;
 
     try {
-        const filteredDocs = { user: user };
-
-        if (startDate || endDate) {
-            filteredDocs.date = {};
-            if (startDate) filteredDocs.date.$gte = new Date(startDate);
-            if (endDate) filteredDocs.date.$lte = new Date(endDate);
-        } else {
-            const { start, end } = getDefaultRange(period);
-            filteredDocs.date = { $gte: start, $lte: end };
-        }
+        const filteredDocs = {
+            user: user,
+            date: {
+                ...(startDate && { $gte: new Date(startDate) }),
+                ...(endDate   && { $lte: new Date(endDate)   }),
+            },
+        };
 
         // Function to build aggregation pipeline
         const buildPipeline = (collectionType) => [

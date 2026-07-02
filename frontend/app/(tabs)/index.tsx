@@ -28,7 +28,12 @@ export default function Index() {
   };
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const monthRange = getPeriodRange('month');
+
+  // Computed fresh on each render so the label stays correct if the app
+  // remains open across a month boundary.
+  const currentMonthRange = getPeriodRange('month');
+  const currentMonthLabel = `${getPeriodLabel('month')} (${formatDateRange(currentMonthRange.start, currentMonthRange.end)})`;
+
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [page, setPage] = useState(1);
@@ -44,12 +49,12 @@ export default function Index() {
   const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://10.0.2.2:3001";
 
   const fetchDashboardSummary = async () => {
+    const { start, end } = getPeriodRange('month');
     try {
-      const response = await fetch(`${API_URL}/api/dashboard/summary?period=month`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await fetch(
+        `${API_URL}/api/dashboard/summary?period=month&startDate=${start.toISOString()}&endDate=${end.toISOString()}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
       const data = await response.json();
       if (response.ok) {
         setSummary(data.summary);
@@ -214,7 +219,7 @@ export default function Index() {
             </View>
           </View>
           <Text style={{ color: colours.textSecondary, fontSize: 12, marginBottom: 4 }}>
-            {getPeriodLabel('month')} ({formatDateRange(monthRange.start, monthRange.end)})
+            {currentMonthLabel}
           </Text>
           <Text
             style={{
