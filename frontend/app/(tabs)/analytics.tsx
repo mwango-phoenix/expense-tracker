@@ -13,10 +13,10 @@ import colours from '@/constants/colours';
 import SpendingChart from '@/components/SpendingChart';
 import PeriodSelector from '@/components/PeriodSelector';
 import TotalSpendingInsight from '@/components/TotalSpendingInsight';
-import WeeklyComparisonInsight from '@/components/WeeklyComparisonInsight';
+// import WeeklyComparisonInsight from '@/components/WeeklyComparisonInsight';
 import { useAuthStore } from '@/store/authStore';
 import { useCategoryBreakdown } from '@/hooks/useCategoryBreakdown';
-import { useWeeklyComparison } from '@/hooks/useWeeklyComparison';
+// import { useWeeklyComparison } from '@/hooks/useWeeklyComparison';
 import styles from '@/styles/home.styles';
 import analyticsStyles from '@/styles/analytics.styles';
 import { TimePeriod, getPeriodLabel, getChartTitle } from '@/utils/dateRange';
@@ -36,14 +36,11 @@ export default function Analytics() {
     loading,
     refetch: refetchBreakdown,
   } = useCategoryBreakdown(token, selectedPeriod);
-  const { weeklyData, refetch: refetchWeekly } = useWeeklyComparison(token);
+  // const { weeklyData, refetch: refetchWeekly } = useWeeklyComparison(token);
 
   const onRefresh = () => {
     setRefreshing(true);
     refetchBreakdown();
-    refetchWeekly();
-    // Both hooks manage their own loading state; this just drives the
-    // pull-to-refresh spinner for a beat so it doesn't feel instantaneous.
     setTimeout(() => setRefreshing(false), 500);
   };
 
@@ -129,7 +126,7 @@ export default function Analytics() {
               expanded={totalSpendingExpanded}
               onToggle={() => setTotalSpendingExpanded((prev) => !prev)}
             />
-            <WeeklyComparisonInsight weeklyData={weeklyData} />
+            {/* <WeeklyComparisonInsight weeklyData={weeklyData} /> */}
           </View>
         </>
       )}
