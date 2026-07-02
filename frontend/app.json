@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "expense-tracker",
-    "slug": "expense-tracker",
+    "slug": "budget-buoy",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -12,6 +12,8 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.wangm.expensetracker",
+      "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -44,6 +46,13 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "8415df2e-9870-41e8-85b8-4c71167ebb8c"
+      }
+    },
+    "owner": "mwangoooo"
   }
 }

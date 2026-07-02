@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "2ba33ef4-7a0d-4405-8f11-689f8e731307"
+      }
+    },
+    "android": {
+      "package": "com.mwangosteen.expensetracker"
+    }
+  }
+}

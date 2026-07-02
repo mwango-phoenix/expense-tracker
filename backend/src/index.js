@@ -17,11 +17,14 @@ app.use("/api/income", incomeRoutes)
 app.use("/api/expense", expenseRoutes)
 app.use("/api/dashboard", dashboardRoutes)
 
+const PORT = process.env.PORT || 3001;
 
-const PORT = process.env.PORT;
+const startServer = async () => {
+  await connectDB();
 
+  app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+  });
+};
 
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-  connectDB();
-});
+startServer();
